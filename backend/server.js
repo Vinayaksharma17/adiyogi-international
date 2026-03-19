@@ -8,12 +8,12 @@ import cors from 'cors';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
-import adminRoutes from './routes/admin.js';
-import productRoutes from './routes/products.js';
-import collectionRoutes from './routes/collections.js';
-import orderRoutes from './routes/orders.js';
-import { initWhatsApp, getWAStatus, getQRBase64 } from './services/whatsapp.js';
-import Collection from './models/Collection.js';
+import adminRoutes from './src/routes/admin.js';
+import productRoutes from './src/routes/products.js';
+import collectionRoutes from './src/routes/collections.js';
+import orderRoutes from './src/routes/orders.js';
+import { initWhatsApp, getWAStatus, getQRBase64 } from './src/services/whatsapp.js';
+import Collection from './src/models/Collection.js';
 
 async function seedSystemCollections() {
   try {
@@ -46,7 +46,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Serve uploaded images/invoices as static files
-app.use('/uploads', express.static(join(__dirname, 'uploads')));
+app.use('/uploads', express.static(join(__dirname, 'src', 'uploads')));
 
 // Routes
 app.use('/api/admin', adminRoutes);
