@@ -3,18 +3,19 @@ import cors from 'cors';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
-import adminRoutes from './routes/admin.js';
-import productRoutes from './routes/products.js';
-import collectionRoutes from './routes/collections.js';
-import orderRoutes from './routes/orders.js';
-import { getWAStatus, getQRBase64 } from './services/whatsapp.js';
-import errorHandler from './middleware/error-handler.js';
+import { env } from './config/env.js';
+import adminRoutes from './routes/admin.routes.js';
+import productRoutes from './routes/products.routes.js';
+import collectionRoutes from './routes/collections.routes.js';
+import orderRoutes from './routes/orders.routes.js';
+import { getWAStatus, getQRBase64 } from './services/whatsapp.service.js';
+import errorHandler from './middleware/error.middleware.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 
 // Middleware
-app.use(cors({ origin: process.env.CLIENT_URL || '*', credentials: true }));
+app.use(cors({ origin: env.CLIENT_URL || '*', credentials: true }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
