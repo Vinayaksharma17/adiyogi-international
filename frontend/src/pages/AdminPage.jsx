@@ -1102,21 +1102,47 @@ function OrdersView() {
 
 /* ─── WHATSAPP SETUP ─── */
 function WhatsAppSetupView() {
-  const [status,  setStatus]  = useState(null);
-  const [qrImage, setQrImage] = useState(null);
-  const [polling, setPolling] = useState(true);
+  const [status,       setStatus]       = useState(null);
+  const [qrImage,      setQrImage]      = useState(null);
+  const [polling,      setPolling]      = useState(true);
+  const [initializing, setInitializing] = useState(false);
 
   const fetchStatus = async () => {
     try {
       const { data } = await api.get('/whatsapp/status');
       setStatus(data);
       if (data.isReady) { setQrImage(null); setPolling(false); return; }
-      if (data.error && !data.hasQR) { setPolling(false); return; }
+      if (data.error && !data.hasQR && !data.isInitializing) { setPolling(false); return; }
       if (data.hasQR) {
         const qrRes = await api.get('/whatsapp/qr');
         if (qrRes.data.qr) setQrImage(qrRes.data.qr);
       }
     } catch { setPolling(false); }
+  };
+
+  const handleInit = async () => {
+    setInitializing(true);
+    try {
+      await api.post('/whatsapp/init');
+      toast.success('WhatsApp initialization started');
+      setPolling(true);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to initialize WhatsApp');
+    } finally {
+      setInitializing(false);
+    }
+  };
+
+  const handleReset = async () => {
+    if (!confirm('This will disconnect WhatsApp and require a new QR scan. Continue?')) return;
+    try {
+      await api.post('/whatsapp/reset');
+      setStatus(null); setQrImage(null);
+      toast.success('Session cleared — click Initialize to get a new QR code');
+      setPolling(true);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to reset session');
+    }
   };
 
   /* eslint-disable react-hooks/set-state-in-effect -- data fetching with polling */
@@ -1158,16 +1184,29 @@ function WhatsAppSetupView() {
           </p>
           {status?.error && (
             <div className="mt-2 space-y-1">
-              <p className="text-amber-700 text-sm">Run these commands in your backend folder to set it up:</p>
-              <code className="block bg-amber-100 text-amber-900 text-xs rounded-lg px-3 py-2 font-mono mt-1">
-                npm install<br/>
-                npm run dev
-              </code>
-              <p className="text-amber-600 text-xs mt-2">Then refresh this page — a QR code will appear to scan.</p>
+              <p className="text-amber-700 text-sm">{status.error}</p>
+              <div className="flex gap-2 mt-3">
+                <button
+                  onClick={handleInit}
+                  disabled={initializing}
+                  className="px-5 py-2 bg-amber-600 text-white rounded-xl font-semibold text-sm hover:bg-amber-700 disabled:opacity-50 transition"
+                >
+                  {initializing ? 'Retrying...' : 'Retry Connection'}
+                </button>
+                <button
+                  onClick={handleReset}
+                  className="px-5 py-2 bg-red-100 text-red-700 rounded-xl font-semibold text-sm hover:bg-red-200 transition"
+                >
+                  Reset Session
+                </button>
+              </div>
             </div>
           )}
           {status?.isReady && (
-            <p className="text-green-600 text-sm mt-1">Messages and PDFs are sent automatically when a customer places an order.</p>
+            <div className="mt-1 flex items-center gap-3">
+              <p className="text-green-600 text-sm">Messages and PDFs are sent automatically when a customer places an order.</p>
+              <button onClick={handleReset} className="text-xs text-gray-400 hover:text-red-500 underline whitespace-nowrap">Reset</button>
+            </div>
           )}
           {!status?.isReady && !status?.error && status?.hasQR && (
             <p className="text-blue-700 text-sm mt-1">Open WhatsApp → More Options → Linked Devices → Link a Device → Scan QR</p>
@@ -1192,9 +1231,29 @@ function WhatsAppSetupView() {
             </>
           ) : (
             <div className="py-10">
-              <div className="w-12 h-12 border-4 border-navy-200 border-t-navy-600 rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-gray-600 font-medium">Waiting for QR code...</p>
-              <p className="text-gray-400 text-xs mt-2">The backend is initializing WhatsApp. This takes ~30 seconds.</p>
+              {status?.isInitializing ? (
+                <>
+                  <div className="w-12 h-12 border-4 border-navy-200 border-t-navy-600 rounded-full animate-spin mx-auto mb-4" />
+                  <p className="text-gray-600 font-medium">Initializing WhatsApp...</p>
+                  <p className="text-gray-400 text-xs mt-2">Waiting for QR code. This takes ~30 seconds.</p>
+                  <button onClick={handleReset} className="mt-4 text-xs text-gray-400 hover:text-red-500 underline">
+                    Stuck? Reset Session
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="text-4xl mb-4">📱</div>
+                  <p className="text-gray-600 font-medium mb-2">WhatsApp is not initialized</p>
+                  <p className="text-gray-400 text-xs mb-4">Click below to start the WhatsApp service and generate a QR code.</p>
+                  <button
+                    onClick={handleInit}
+                    disabled={initializing}
+                    className="px-6 py-2.5 bg-navy-600 text-white rounded-xl font-semibold text-sm hover:bg-navy-700 disabled:opacity-50 transition"
+                  >
+                    {initializing ? 'Starting...' : 'Initialize WhatsApp'}
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>
