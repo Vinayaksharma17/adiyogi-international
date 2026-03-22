@@ -7,7 +7,7 @@ export function validate(schema) {
       next();
     } catch (err) {
       if (err instanceof ZodError) {
-        const message = err.errors.map((e) => e.message).join(', ');
+        const message = err.issues.map((e) => e.message).join(', ');
         return next({ name: 'ValidationError', message, statusCode: 400 });
       }
       next(err);
