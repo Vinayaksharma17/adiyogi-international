@@ -31,8 +31,10 @@ const orderSchema = new mongoose.Schema({
   total:       { type: Number, required: true },
   paymentMode: { type: String, default: 'Credit', enum: ['Credit', 'Cash', 'Online', 'UPI'] },
   status:      { type: String, default: 'Pending', enum: ['Pending','Confirmed','Shipped','Delivered','Cancelled'] },
-  notes:       { type: String, default: '' },
-  whatsappSent:{ type: Boolean, default: false },
+  notes:          { type: String, default: '' },
+  whatsappSent:   { type: Boolean, default: false },
+  invoiceUrl:     { type: String, default: null },  // ImageKit CDN URL
+  invoiceFileId:  { type: String, default: null },  // ImageKit fileId for deletion
 }, { timestamps: true });
 
 orderSchema.index({ status: 1, createdAt: -1 });

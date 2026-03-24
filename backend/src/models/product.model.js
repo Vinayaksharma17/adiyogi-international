@@ -12,7 +12,8 @@ const productSchema = new mongoose.Schema({
   secondaryUnit:      { type: String, default: 'NOS', enum: ['NOS', 'None'] },
   unitConversionRate: { type: Number, default: 10 },
   stock:            { type: Number, default: 0 },
-  images:           [{ type: String }],
+  images:           [{ type: String }],  // ImageKit CDN URLs
+  imageFileIds:     [{ type: String }],  // ImageKit fileIds (parallel array for deletion)
   collections:      [{ type: mongoose.Schema.Types.ObjectId, ref: 'Collection' }],
   place:            { type: String, default: '' },
   isActive:         { type: Boolean, default: true },
