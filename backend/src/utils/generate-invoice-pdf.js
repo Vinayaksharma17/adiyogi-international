@@ -7,6 +7,11 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = dirname(__filename);
 
+// fileName convention used externally (e.g. for WhatsApp attachment name)
+export function invoiceFileName(order) {
+  return `Invoice-${order.orderId}.pdf`;
+}
+
 function numberToWords(num) {
   const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
     'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
@@ -20,20 +25,21 @@ function numberToWords(num) {
   return numberToWords(Math.floor(num / 10000000)) + ' Crore' + (num % 10000000 ? ' ' + numberToWords(num % 10000000) : '');
 }
 
+/**
+ * Generate a PDF invoice for the given order.
+ * Returns a Buffer — nothing is written to disk.
+ *
+ * @param {object} order  Mongoose order document
+ * @returns {Promise<Buffer>}
+ */
 async function generateInvoicePDF(order) {
   return new Promise((resolve, reject) => {
     try {
-      // Ensure invoices directory exists
-      const invoicesDir = path.join(__dirname, '..', 'uploads', 'invoices');
-      fs.mkdirSync(invoicesDir, { recursive: true });
-
-      const fileName = `${order.orderId}.pdf`;
-      const filePath = path.join(invoicesDir, fileName);
-      const fileUrl  = `/uploads/invoices/${fileName}`;
-
-      const doc = new PDFDocument({ margin: 40, size: 'A4' });
-      const stream = fs.createWriteStream(filePath);
-      doc.pipe(stream);
+      const doc    = new PDFDocument({ margin: 40, size: 'A4' });
+      const chunks = [];
+      doc.on('data',  (chunk) => chunks.push(chunk));
+      doc.on('end',   () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
 
       // ── Colors & helpers ──
       const NAVY   = '#1B3A6B';
@@ -189,9 +195,6 @@ async function generateInvoicePDF(order) {
         .text(`Order ID: ${order.orderId}`, 0, footerY + 46, { align: 'right', width: 555 });
 
       doc.end();
-
-      stream.on('finish', () => resolve({ filePath, fileUrl, fileName }));
-      stream.on('error', reject);
     } catch (err) {
       reject(err);
     }

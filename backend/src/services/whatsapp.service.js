@@ -204,3 +204,14 @@ export async function sendWhatsAppDocument(phone, filePath, filename, caption) {
     return true;
   } catch (err) { console.error('WA doc error:', err.message); return false; }
 }
+
+export async function sendWhatsAppDocumentBuffer(phone, buffer, filename, caption) {
+  if (!isReady || !sock) return false;
+  try {
+    await sock.sendMessage(toJID(phone), {
+      document: buffer, mimetype: 'application/pdf',
+      fileName: filename, caption: caption || filename,
+    });
+    return true;
+  } catch (err) { console.error('WA doc error:', err.message); return false; }
+}

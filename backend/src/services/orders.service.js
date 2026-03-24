@@ -1,17 +1,13 @@
-import { join, dirname } from 'path';
-import { existsSync } from 'fs';
-import { fileURLToPath } from 'url';
 import mongoose from 'mongoose';
 import { ApiError } from '../utils/api-error.js';
 import { buildAdminMessage, buildCustomerMessage } from '../utils/helpers.js';
 import * as orderRepo from '../repositories/order.repository.js';
 import * as productRepo from '../repositories/product.repository.js';
 import * as adminRepo from '../repositories/admin.repository.js';
-import { sendWhatsAppMessage, sendWhatsAppDocument, getWAStatus } from './whatsapp.service.js';
+import { sendWhatsAppMessage, sendWhatsAppDocumentBuffer, getWAStatus } from './whatsapp.service.js';
+import { uploadInvoicePdf } from './imagekit.service.js';
 import { env } from '../config/env.js';
 import { logger } from '../config/logger.js';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Lazy-load PDF generation so a broken pdfkit install won't crash the server
 let generateInvoicePDF = null;
@@ -41,11 +37,8 @@ export async function createOrder({ customer, items: cartItems, paymentMode }) {
     let order;
 
     const runOrderCreation = async (txnSession) => {
-      // Batch-fetch all products in a single query
       const productIds = cartItems.map((item) => item.productId);
-      const products = await productRepo.findByIds(productIds, { session: txnSession });
-
-      // Build a lookup map for O(1) access
+      const products   = await productRepo.findByIds(productIds, { session: txnSession });
       const productMap = new Map(products.map((p) => [p._id.toString(), p]));
 
       const orderItems = [];
@@ -70,14 +63,13 @@ export async function createOrder({ customer, items: cartItems, paymentMode }) {
         });
       }
 
-      const total = subtotal;
       order = await orderRepo.create(
         {
           customer,
           items: orderItems,
           subtotal,
           gstTotal: 0,
-          total,
+          total: subtotal,
           paymentMode: paymentMode || 'Credit',
         },
         { session: txnSession },
@@ -92,40 +84,53 @@ export async function createOrder({ customer, items: cartItems, paymentMode }) {
 
     // --- Side effects (outside transaction) ---
 
-    // Generate PDF invoice
-    let pdfFilePath = null;
-    let pdfFileUrl = null;
+    // Generate PDF buffer and upload to ImageKit
+    let pdfBuffer    = null;
+    let invoiceUrl   = null;
+
     try {
-      const { fileUrl } = generateInvoicePDF ? await generateInvoicePDF(order) : { fileUrl: null };
-      pdfFileUrl = fileUrl;
-      pdfFilePath = join(__dirname, '..', fileUrl.replace(/^\//, ''));
+      if (generateInvoicePDF) {
+        pdfBuffer = await generateInvoicePDF(order);
+        const uploaded = await uploadInvoicePdf(pdfBuffer, order.orderId);
+        invoiceUrl = uploaded.url;
+
+        // Persist CDN URL and fileId on the order
+        await orderRepo.update(order._id, {
+          invoiceUrl:    uploaded.url,
+          invoiceFileId: uploaded.fileId,
+        });
+        order.invoiceUrl   = uploaded.url;
+        order.invoiceFileId = uploaded.fileId;
+      }
     } catch (pdfErr) {
-      logger.error({ err: pdfErr }, 'PDF generation failed (non-fatal)');
+      logger.error({ err: pdfErr }, 'Invoice generation/upload failed (non-fatal)');
     }
 
-    // Auto-send WhatsApp via server
+    // Auto-send WhatsApp
     const waStatus = getWAStatus();
-    let adminSent = false;
+    let adminSent    = false;
     let customerSent = false;
 
     if (waStatus.isReady) {
       const adminRecord = await adminRepo.findOneAdmin({}, 'whatsappNumber');
-      const adminPhone = adminRecord?.whatsappNumber || env.ADMIN_WHATSAPP;
+      const adminPhone  = adminRecord?.whatsappNumber || env.ADMIN_WHATSAPP;
 
-      const adminMsg = buildAdminMessage(order);
+      const adminMsg    = buildAdminMessage(order);
       const customerMsg = buildCustomerMessage(order);
 
       const [aSent, cSent] = await Promise.all([
         adminPhone ? sendWhatsAppMessage(adminPhone, adminMsg) : Promise.resolve(false),
         sendWhatsAppMessage(customer.whatsapp || customer.phone, customerMsg),
       ]);
-      adminSent = aSent;
+      adminSent    = aSent;
       customerSent = cSent;
 
-      if (pdfFilePath && existsSync(pdfFilePath)) {
+      // Send PDF buffer as WhatsApp document attachment
+      if (pdfBuffer) {
         const pdfCaption = `Invoice for Order ${order.orderId}`;
-        if (adminPhone) sendWhatsAppDocument(adminPhone, pdfFilePath, `Invoice-${order.orderId}.pdf`, pdfCaption);
-        sendWhatsAppDocument(customer.whatsapp || customer.phone, pdfFilePath, `Invoice-${order.orderId}.pdf`, pdfCaption);
+        const pdfName    = `Invoice-${order.orderId}.pdf`;
+        if (adminPhone) sendWhatsAppDocumentBuffer(adminPhone, pdfBuffer, pdfName, pdfCaption);
+        sendWhatsAppDocumentBuffer(customer.whatsapp || customer.phone, pdfBuffer, pdfName, pdfCaption);
       }
     } else {
       logger.info('WhatsApp not connected — scan QR in admin panel to enable auto-send');
@@ -133,7 +138,7 @@ export async function createOrder({ customer, items: cartItems, paymentMode }) {
 
     return {
       order,
-      pdfUrl: pdfFileUrl,
+      pdfUrl: invoiceUrl,
       autoSent: { admin: adminSent, customer: customerSent, waReady: waStatus.isReady },
     };
   } finally {
@@ -151,8 +156,19 @@ export async function getOrderInvoice(id) {
   const order = await orderRepo.findById(id);
   if (!order) throw new ApiError(404, 'Order not found');
 
-  const filePath = join(__dirname, '..', 'uploads', 'invoices', `${order.orderId}.pdf`);
-  if (!existsSync(filePath) && generateInvoicePDF) await generateInvoicePDF(order);
+  // Return CDN URL if already uploaded
+  if (order.invoiceUrl) return { order, invoiceUrl: order.invoiceUrl };
 
-  return { order, filePath };
+  // Otherwise generate on-demand and upload
+  if (!generateInvoicePDF) throw new ApiError(503, 'PDF generation is unavailable');
+
+  const pdfBuffer = await generateInvoicePDF(order);
+  const uploaded  = await uploadInvoicePdf(pdfBuffer, order.orderId);
+
+  await orderRepo.update(order._id, {
+    invoiceUrl:    uploaded.url,
+    invoiceFileId: uploaded.fileId,
+  });
+
+  return { order, invoiceUrl: uploaded.url };
 }

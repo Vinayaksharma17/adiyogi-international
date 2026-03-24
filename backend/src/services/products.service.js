@@ -1,6 +1,7 @@
 import { ApiError } from '../utils/api-error.js';
 import { parseCollections } from '../utils/helpers.js';
 import * as productRepo from '../repositories/product.repository.js';
+import * as imagekitService from './imagekit.service.js';
 
 export async function getProducts({ page = 1, limit = 12, search, collection } = {}) {
   const filter = { isActive: true };
@@ -37,8 +38,11 @@ export async function createProduct(body, files) {
   delete data.collection;
 
   if (files?.length) {
-    data.images = files.map((f) => `/uploads/products/${f.filename}`);
+    const uploaded    = await imagekitService.uploadProductImages(files);
+    data.images       = uploaded.map((u) => u.url);
+    data.imageFileIds = uploaded.map((u) => u.fileId);
   }
+
   return productRepo.create(data);
 }
 
@@ -48,12 +52,26 @@ export async function updateProduct(id, body, files) {
   delete data.collection;
 
   if (files?.length) {
-    data.images = files.map((f) => `/uploads/products/${f.filename}`);
+    // Upload new images first
+    const uploaded    = await imagekitService.uploadProductImages(files);
+    data.images       = uploaded.map((u) => u.url);
+    data.imageFileIds = uploaded.map((u) => u.fileId);
+
+    // Delete old images from ImageKit (fire-and-forget)
+    const existing = await productRepo.findById(id);
+    if (existing?.imageFileIds?.length) {
+      imagekitService.deleteFiles(existing.imageFileIds).catch(() => {});
+    }
   }
+
   return productRepo.update(id, data);
 }
 
 export async function deleteProduct(id) {
+  const product = await productRepo.findById(id);
+  if (product?.imageFileIds?.length) {
+    imagekitService.deleteFiles(product.imageFileIds).catch(() => {});
+  }
   await productRepo.softDelete(id);
   return { message: 'Product removed' };
 }
