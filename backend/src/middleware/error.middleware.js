@@ -26,6 +26,14 @@ const errorHandler = (err, _req, res, _next) => {
     return res.status(400).json({ message: err.message });
   }
 
+  // ImageKit CDN errors
+  if (err.message && (err.message.toLowerCase().includes('imagekit') || err.message.includes('ik.imagekit'))) {
+    return res.status(502).json({
+      message: 'CDN service error. Please try again.',
+      ...(process.env.NODE_ENV === 'development' && { detail: err.message }),
+    });
+  }
+
   res.status(500).json({ message: err.message });
 };
 

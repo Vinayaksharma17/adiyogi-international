@@ -1,30 +1,25 @@
 import multer from 'multer';
-import { join, dirname, extname } from 'path';
-import { mkdirSync } from 'fs';
-import { fileURLToPath } from 'url';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
-function createStorage(subfolder) {
-  return multer.diskStorage({
-    destination: (_req, _file, cb) => {
-      const dir = join(__dirname, '..', 'uploads', subfolder);
-      mkdirSync(dir, { recursive: true });
-      cb(null, dir);
-    },
-    filename: (_req, file, cb) => {
-      const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
-      cb(null, unique + extname(file.originalname));
-    },
-  });
-}
+// All files are buffered in memory — ImageKit receives the buffer directly
+const memoryStorage = multer.memoryStorage();
 
 const imageFilter = (_req, file, cb) => {
   if (file.mimetype.startsWith('image/')) cb(null, true);
   else cb(new Error('Only image files allowed'));
 };
 
-const limits = { fileSize: 10 * 1024 * 1024 };
+const limits = { fileSize: 10 * 1024 * 1024 }; // 10 MB
 
-export const uploadProductImages = multer({ storage: createStorage('products'), limits, fileFilter: imageFilter });
-export const uploadCollectionImage = multer({ storage: createStorage('collections'), limits, fileFilter: imageFilter });
+/** Product images — multiple files, field name: "images" */
+export const uploadProductImages = multer({
+  storage: memoryStorage,
+  limits,
+  fileFilter: imageFilter,
+}).array('images', 10);
+
+/** Collection image — single file, field name: "image" */
+export const uploadCollectionImage = multer({
+  storage: memoryStorage,
+  limits,
+  fileFilter: imageFilter,
+}).single('image');
