@@ -25,22 +25,11 @@ export default function OrderSuccessPage() {
     return () => [t1, t2, t3].forEach(clearTimeout);
   }, [order]);
 
-  // Auto-trigger PDF download
+  // Auto-open invoice PDF in new tab
   useEffect(() => {
     if (!pdfUrl || !order) return;
     const timer = setTimeout(() => {
-      const iframe = document.createElement("iframe");
-      iframe.style.display = "none";
-      iframe.src = pdfUrl;
-      document.body.appendChild(iframe);
-      const a = document.createElement("a");
-      a.href = `/api/orders/${order._id}/invoice`;
-      a.download = `Invoice-${order.orderId}.pdf`;
-      a.style.display = "none";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => document.body.removeChild(iframe), 5000);
+      window.open(pdfUrl, "_blank", "noopener,noreferrer");
       setPdfReady(true);
     }, 800);
     return () => clearTimeout(timer);
@@ -174,12 +163,13 @@ export default function OrderSuccessPage() {
                   </p>
                 </div>
                 <a
-                  href={`/api/orders/${order._id}/invoice`}
-                  download={`Invoice-${order.orderId}.pdf`}
+                  href={pdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex-shrink-0 flex items-center gap-2 bg-white hover:bg-champagne-50 text-champagne-700 font-bold px-4 py-2.5 rounded-xl transition-all text-sm"
                 >
                   <DownloadIcon className="w-4 h-4" />
-                  {pdfReady ? "Download Again" : "Download PDF"}
+                  {pdfReady ? "Open Again" : "Open PDF"}
                 </a>
               </div>
             </div>
