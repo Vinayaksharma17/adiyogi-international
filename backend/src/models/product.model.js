@@ -22,5 +22,6 @@ const productSchema = new mongoose.Schema({
 
 productSchema.index({ name: 'text', itemCode: 'text', description: 'text' });
 productSchema.index({ isActive: 1, createdAt: -1 });
+productSchema.index({ collections: 1, isActive: 1 }); // fast collection-filter queries
 
 export default mongoose.model('Product', productSchema);

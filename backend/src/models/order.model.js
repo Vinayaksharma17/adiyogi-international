@@ -31,7 +31,7 @@ const orderSchema = new mongoose.Schema({
   total:       { type: Number, required: true },
   paymentMode: { type: String, default: 'Credit', enum: ['Credit', 'Cash', 'Online', 'UPI'] },
   status:      { type: String, default: 'Pending', enum: ['Pending','Confirmed','Shipped','Delivered','Cancelled'] },
-  notes:          { type: String, default: '' },
+  notes:          { type: String, default: '', maxlength: 500 },
   whatsappSent:   { type: Boolean, default: false },
   invoiceUrl:     { type: String, default: null },  // ImageKit CDN URL
   invoiceFileId:  { type: String, default: null },  // ImageKit fileId for deletion
@@ -42,8 +42,16 @@ orderSchema.index({ createdAt: -1 });
 
 orderSchema.pre('save', async function (next) {
   if (!this.orderId) {
-    const count = await mongoose.model('Order').countDocuments();
-    this.orderId = `ADI-${String(count + 1).padStart(4, '0')}`;
+    // Use findOneAndUpdate on a counter doc for atomic, race-condition-safe ID generation
+    const counter = await mongoose.connection.db
+      .collection('counters')
+      .findOneAndUpdate(
+        { _id: 'orderId' },
+        { $inc: { seq: 1 } },
+        { upsert: true, returnDocument: 'after' },
+      );
+    const seq = counter.seq ?? counter.value?.seq ?? 1;
+    this.orderId = `ADI-${String(seq).padStart(4, '0')}`;
   }
   next();
 });
