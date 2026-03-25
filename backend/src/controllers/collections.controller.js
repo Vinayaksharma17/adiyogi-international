@@ -3,6 +3,7 @@ import * as collectionsService from '../services/collections.service.js';
 
 export const getCollections = asyncHandler(async (req, res) => {
   const collections = await collectionsService.getCollections();
+  res.set('Cache-Control', 'public, max-age=60'); // collections change rarely — cache 60s
   res.json(collections);
 });
 
