@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import compression from 'compression';
+import rateLimit from 'express-rate-limit';
 
 import { env } from './config/env.js';
 import adminRoutes from './routes/admin.routes.js';
@@ -12,16 +14,34 @@ import errorHandler from './middleware/error.middleware.js';
 
 const app = express();
 
+// Rate limiters
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later.' },
+});
+const orderLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many orders submitted, please wait before trying again.' },
+});
+
 // Middleware
 app.use(cors({ origin: env.CLIENT_URL || '*', credentials: true }));
+app.use(compression());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use('/api', generalLimiter);
 
 // Routes
 app.use('/api/admin', adminRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/collections', collectionRoutes);
-app.use('/api/orders', orderRoutes);
+app.use('/api/orders', orderLimiter, orderRoutes);
 
 // WhatsApp status & QR endpoints
 app.get('/api/whatsapp/status', (_, res) => res.json(getWAStatus()));
