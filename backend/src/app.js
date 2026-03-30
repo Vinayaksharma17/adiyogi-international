@@ -14,12 +14,17 @@ import errorHandler from './middleware/error.middleware.js';
 
 const app = express();
 
+// Trust the reverse proxy (nginx) so req.ip reflects the real client IP
+// Required for rate limiting to work correctly behind nginx/Coolify proxy
+app.set('trust proxy', true);
+
 // Rate limiters
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 200,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { trustProxy: false },
   message: { error: 'Too many requests, please try again later.' },
 });
 const orderLimiter = rateLimit({
@@ -27,6 +32,7 @@ const orderLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { trustProxy: false },
   message: { error: 'Too many orders submitted, please wait before trying again.' },
 });
 
