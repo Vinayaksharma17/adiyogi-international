@@ -767,10 +767,12 @@ function ProductsView() {
 function CollectionsView() {
   const [collections,  setCollections]  = useState([]);
   const [showForm,     setShowForm]     = useState(false);
+  const [editingCollection, setEditingCollection] = useState(null);
   const [name,         setName]         = useState('');
   const [desc,         setDesc]         = useState('');
   const [image,        setImage]        = useState(null);
   const [preview,      setPreview]      = useState(null);
+  const [currentImage, setCurrentImage] = useState(null);
   const [loading,      setLoading]      = useState(false);
   const [errors,       setErrors]       = useState({});
   const [deleting,     setDeleting]     = useState(null); // id being deleted
@@ -780,7 +782,18 @@ function CollectionsView() {
 
   useEffect(() => { fetchCollections(); }, []);
 
-  const resetForm = () => { setName(''); setDesc(''); setImage(null); setPreview(null); setErrors({}); };
+  const resetForm = () => { setName(''); setDesc(''); setImage(null); setPreview(null); setErrors({}); setCurrentImage(null); };
+
+  const openEditForm = (col) => {
+    setEditingCollection(col);
+    setName(col.name);
+    setDesc(col.description || '');
+    setImage(null);
+    setPreview(null);
+    setCurrentImage(col.image || null);
+    setErrors({});
+    setShowForm(true);
+  };
 
   const handleImageChange = e => {
     const file = e.target.files[0];
@@ -805,6 +818,25 @@ function CollectionsView() {
     finally { setLoading(false); }
   };
 
+  const handleUpdate = async e => {
+    e.preventDefault();
+    if (!editingCollection) return;
+    const fieldErrors = validateFields(collectionSchema, { name, description: desc });
+    if (Object.keys(fieldErrors).length > 0) { setErrors(fieldErrors); toast.error(Object.values(fieldErrors)[0]); return; }
+    setErrors({});
+    setLoading(true);
+    try {
+      const fd = new FormData();
+      fd.append('name', name.trim());
+      fd.append('description', desc);
+      if (image) fd.append('image', image);
+      await api.put(`/collections/${editingCollection._id}`, fd);
+      toast.success('Collection updated!');
+      resetForm(); setShowForm(false); setEditingCollection(null); fetchCollections();
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed to update'); }
+    finally { setLoading(false); }
+  };
+
   const handleDelete = async (id, colName) => {
     if (!confirm(`Remove collection "${colName}"? Products in this collection will become uncategorised.`)) return;
     setDeleting(id);
@@ -823,15 +855,15 @@ function CollectionsView() {
         <button onClick={() => { resetForm(); setShowForm(true); }} className="btn-primary whitespace-nowrap">+ New Collection</button>
       </div>
 
-      {/* Create Form Modal */}
+      {/* Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-3 sm:p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
             <div className="p-5 border-b border-gray-100 flex justify-between items-center">
-              <h2 className="font-display font-bold text-lg text-navy-800">New Collection</h2>
-              <button onClick={() => { setShowForm(false); resetForm(); }} className="text-gray-400 hover:text-gray-600 text-xl p-1">✕</button>
+              <h2 className="font-display font-bold text-lg text-navy-800">{editingCollection ? 'Edit Collection' : 'New Collection'}</h2>
+              <button onClick={() => { setShowForm(false); resetForm(); setEditingCollection(null); }} className="text-gray-400 hover:text-gray-600 text-xl p-1">✕</button>
             </div>
-            <form onSubmit={handleCreate} className="p-5 space-y-4" noValidate>
+            <form onSubmit={editingCollection ? handleUpdate : handleCreate} className="p-5 space-y-4" noValidate>
               <div>
                 <Label>Collection Name *</Label>
                 <input value={name} onChange={e => { setName(e.target.value); if (errors.name) setErrors(p => ({...p, name: undefined})); }} className={`input ${errors.name ? 'border-red-400' : ''}`} placeholder="e.g. Spray Nozzles" />
@@ -845,17 +877,17 @@ function CollectionsView() {
                 <Label>Cover Image</Label>
                 <input type="file" accept="image/*" onChange={handleImageChange}
                   className="block w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:bg-navy-50 file:text-navy-700 file:font-semibold hover:file:bg-navy-100" />
-                {preview && (
+                {(preview || currentImage) && (
                   <div className="mt-3 relative w-full h-32 rounded-xl overflow-hidden border-2 border-navy-100">
-                    <img src={preview} alt="Preview" className="w-full h-full object-cover" />
-                    <button type="button" onClick={() => { setImage(null); setPreview(null); }}
+                    <img src={preview || currentImage} alt="Preview" className="w-full h-full object-cover" />
+                    <button type="button" onClick={() => { setImage(null); setPreview(null); setCurrentImage(null); }}
                       className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">✕</button>
                   </div>
                 )}
               </div>
               <div className="flex gap-3 pt-1">
-                <button type="submit" disabled={loading} className="flex-1 btn-primary">{loading ? 'Creating...' : 'Create'}</button>
-                <button type="button" onClick={() => { setShowForm(false); resetForm(); }} className="flex-1 btn-secondary">Cancel</button>
+                <button type="submit" disabled={loading} className="flex-1 btn-primary">{loading ? (editingCollection ? 'Saving...' : 'Creating...') : (editingCollection ? 'Save Changes' : 'Create')}</button>
+                <button type="button" onClick={() => { setShowForm(false); resetForm(); setEditingCollection(null); }} className="flex-1 btn-secondary">Cancel</button>
               </div>
             </form>
           </div>
@@ -876,12 +908,19 @@ function CollectionsView() {
                   <div className="w-full h-full flex items-center justify-center text-4xl">🌿</div>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                <div className="absolute bottom-3 left-3 right-10">
+                <div className="absolute bottom-3 left-3 right-14">
                   <h3 className="font-display font-bold text-white text-base">{col.name}</h3>
                   {col.description && <p className="text-white/70 text-xs mt-0.5 line-clamp-1">{col.description}</p>}
                 </div>
+                <button
+                  onClick={() => openEditForm(col)}
+                  className="absolute top-2 right-2 bg-white/90 hover:bg-white text-navy-700 p-1.5 rounded-lg shadow-md transition-colors"
+                  title="Edit collection"
+                >
+                  <PencilIcon className="w-4 h-4" />
+                </button>
                 {col.isSystem && (
-                  <div className="absolute top-2 right-2 bg-champagne-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  <div className="absolute top-2 left-2 bg-champagne-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
                     🔒 Protected
                   </div>
                 )}
@@ -916,6 +955,13 @@ const TrashIcon = ({ className }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
       d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+  </svg>
+);
+
+const PencilIcon = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
   </svg>
 );
 
