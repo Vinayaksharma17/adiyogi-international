@@ -9,11 +9,7 @@ export default function ProductCard({ product }) {
   const [imgErr, setImgErr] = useState(false);
 
   const salesPrice = product.salesPrice ?? product.price ?? 0;
-  const purchasePrice = product.purchasePrice ?? product.originalPrice;
   const conversion = product.unitConversionRate ?? product.packSize ?? 10;
-  const discount = purchasePrice
-    ? Math.round((1 - salesPrice / purchasePrice) * 100)
-    : 0;
 
   const cartItem = cart.find((i) => i.productId === product._id);
   const inCart = !!cartItem;
@@ -22,11 +18,6 @@ export default function ProductCard({ product }) {
     <div className="card group relative flex flex-col h-full">
       {/* Badges */}
       <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
-        {discount > 0 && (
-          <span className="badge bg-red-500 text-white text-[9px] sm:text-[10px]">
-            {discount}% OFF
-          </span>
-        )}
         {product.stock === 0 && (
           <span className="badge bg-gray-500 text-white text-[9px] sm:text-[10px]">
             Out of Stock
@@ -78,20 +69,11 @@ export default function ProductCard({ product }) {
       {/* ── Non-clickable area: price + add/stepper ── */}
       <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-2 flex items-center justify-between">
         {/* Price */}
-        <div>
-          <div className="flex items-baseline gap-1 flex-wrap">
-            <span className="font-bold text-base sm:text-lg text-gray-900">
-              ₹{formatCurrency(salesPrice)}
-            </span>
-            {purchasePrice && (
-              <span className="text-[10px] text-gray-400 line-through">
-                ₹{formatCurrency(purchasePrice)}
-              </span>
-            )}
-          </div>
-          <p className="text-[10px] text-gray-400">
-            per {product.baseUnit || "Nos"}
-          </p>
+        <div className="flex items-baseline gap-1.5 mt-2 sm:mt-3 flex-wrap">
+          <span className="font-display font-bold text-base sm:text-lg lg:text-xl text-navy-700">
+            ₹{formatCurrency(salesPrice)}
+          </span>
+          <span className="text-[9px] sm:text-[10px] text-gray-400">/PAC</span>
         </div>
 
         {/* Add / Stepper */}
