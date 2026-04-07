@@ -831,29 +831,10 @@ function ProductsView() {
                           <button
                             type="button"
                             onClick={() => {
-                              const reader = new FileReader();
-                              reader.onload = () => {
-                                setCropImageSrc(reader.result);
-                                setCropIndex(i);
-                                setCropModalOpen(true);
-                              };
-                              if (src.startsWith('blob:')) {
-                                reader.readAsDataURL(images[i]);
-                              } else {
-                                const img = new Image();
-                                img.crossOrigin = "anonymous";
-                                img.onload = () => {
-                                  const canvas = document.createElement("canvas");
-                                  canvas.width = img.width;
-                                  canvas.height = img.height;
-                                  const ctx = canvas.getContext("2d");
-                                  ctx.drawImage(img, 0, 0);
-                                  canvas.toBlob(blob => {
-                                    reader.readAsDataURL(blob);
-                                  }, "image/jpeg");
-                                };
-                                img.src = src;
-                              }
+                              const imgUrl = existingImages[i].url;
+                              setCropImageSrc(imgUrl);
+                              setCropIndex(i);
+                              setCropModalOpen(true);
                             }}
                             className="w-5 h-5 bg-navy-700 text-white rounded-tr-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                             title="Re-crop image"
