@@ -118,12 +118,12 @@ export default function CheckoutPage() {
                   <FieldError msg={errors.name} />
                 </div>
                 <div>
-                  <Label>Mobile Number *</Label>
+                  <Label>Mobile Number (optional)</Label>
                   <input
                     name="phone"
                     value={form.phone}
                     onChange={handleChange}
-                    className={`input ${errors.phone ? "border-red-400" : ""}`}
+                    className="input"
                     placeholder="9876543210"
                     maxLength={10}
                   />
