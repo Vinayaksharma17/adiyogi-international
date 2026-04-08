@@ -107,7 +107,7 @@ export default function CheckoutPage() {
             <FormSection title="Personal Information" step="1">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="sm:col-span-2">
-                  <Label>Full Name *</Label>
+                  <Label>Dealer Name *</Label>
                   <input
                     name="name"
                     value={form.name}
@@ -118,7 +118,7 @@ export default function CheckoutPage() {
                   <FieldError msg={errors.name} />
                 </div>
                 <div>
-                  <Label>Mobile Number (optional)</Label>
+                  <Label>Dealer Code (optional)</Label>
                   <input
                     name="phone"
                     value={form.phone}
