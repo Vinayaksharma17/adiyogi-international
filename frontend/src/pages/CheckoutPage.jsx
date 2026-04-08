@@ -104,10 +104,10 @@ export default function CheckoutPage() {
           {/* Left: Form */}
           <div className="lg:col-span-3 space-y-5 sm:space-y-6">
             {/* Personal Info */}
-            <FormSection title="Personal Information" step="1">
+            <FormSection title="Dealer Name" step="1">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="sm:col-span-2">
-                  <Label>Dealer Name *</Label>
+                  <Label>Full Name *</Label>
                   <input
                     name="name"
                     value={form.name}
