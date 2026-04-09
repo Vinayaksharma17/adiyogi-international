@@ -125,7 +125,6 @@ export default function CheckoutPage() {
                     onChange={handleChange}
                     className="input"
                     placeholder="9876543210"
-                    maxLength={10}
                   />
                   <FieldError msg={errors.phone} />
                 </div>
