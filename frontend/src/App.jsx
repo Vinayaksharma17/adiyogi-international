@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import CartSidebar from "@/components/CartSidebar";
 import CartBar from "@/components/CartBar";
 import Footer from "@/components/Footer";
+import ScrollToTop from "@/components/ScrollToTop";
 
 const HomePage = lazy(() => import("@/pages/HomePage"));
 const ProductDetailPage = lazy(() => import("@/pages/ProductDetailPage"));
@@ -39,6 +40,7 @@ export default function App() {
     <ErrorBoundary>
       <CartProvider>
         <BrowserRouter>
+          <ScrollToTop />
           <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
           <Suspense fallback={<LoadingSpinner />}>
             <Routes>

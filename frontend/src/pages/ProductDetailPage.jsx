@@ -98,7 +98,14 @@ export default function ProductDetailPage() {
         {/* Back button */}
         <div className="mb-4">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => {
+              const page = sessionStorage.getItem("adiyogi_page") || "1";
+              const collection = sessionStorage.getItem("adiyogi_collection") || "all";
+              const url = page !== "1" || collection !== "all" 
+                ? `/?page=${page}&collection=${collection}#products` 
+                : "/#products";
+              navigate(url, { replace: true });
+            }}
             className="flex items-center gap-2 text-navy-600 hover:text-navy-800 font-semibold transition-colors"
           >
             <ArrowLeftIcon className="w-5 h-5" /> Back to Products

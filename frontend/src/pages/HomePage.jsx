@@ -135,9 +135,14 @@ export default function HomePage() {
   const [collections, setCollections] = useState([]);
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(() => {
+    const saved = sessionStorage.getItem("adiyogi_page");
+    return saved ? parseInt(saved, 10) : 1;
+  });
   const [search, setSearch] = useState("");
-  const [activeCollection, setActiveCollection] = useState("all");
+  const [activeCollection, setActiveCollection] = useState(() => {
+    return sessionStorage.getItem("adiyogi_collection") || "all";
+  });
   const [loading, setLoading] = useState(false);
   const productsRef = useRef();
 
@@ -165,11 +170,14 @@ export default function HomePage() {
   const handleCollection = (id) => {
     setActiveCollection(id);
     setCurrentPage(1);
+    sessionStorage.setItem("adiyogi_collection", id);
+    sessionStorage.setItem("adiyogi_page", "1");
     productsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const handlePage = (p) => {
     setCurrentPage(p);
+    sessionStorage.setItem("adiyogi_page", p.toString());
     productsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
