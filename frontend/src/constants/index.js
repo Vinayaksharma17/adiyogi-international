@@ -5,7 +5,7 @@ export const STORAGE_KEYS = {
   ADMIN_TOKEN: "adiyogi_admin_token",
 };
 
-export const PAYMENT_MODES = ["Credit", "Cash", "UPI", "Online"];
+export const PAYMENT_MODES = ["Credit"];
 
 export const INDIAN_STATES = [
   "Andhra Pradesh",

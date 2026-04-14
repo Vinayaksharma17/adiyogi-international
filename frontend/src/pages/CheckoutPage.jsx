@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/context/CartContext";
 import { formatCurrency } from "@/lib/formatters";
-import { INDIAN_STATES, PAYMENT_MODES } from "@/constants";
+import { INDIAN_STATES } from "@/constants";
 import api from "@/lib/api-client";
 import { checkoutSchema, validateFields } from "@/lib/validators";
 import toast from "react-hot-toast";
@@ -20,7 +20,6 @@ export default function CheckoutPage() {
     state: "",
     pincode: "",
   });
-  const [paymentMode, setPaymentMode] = useState("Credit");
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -50,7 +49,7 @@ export default function CheckoutPage() {
       const { data } = await api.post("/orders", {
         customer: { ...form },
         items: cart.map((i) => ({ productId: i.productId, quantity: i.quantity })),
-        paymentMode,
+        paymentMode: "Credit",
       });
       clearCart();
       navigate("/order-success", {
@@ -174,7 +173,7 @@ export default function CheckoutPage() {
             <FormSection title="Delivery Address" step="2">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="sm:col-span-2">
-                  <Label>Street Address *</Label>
+                  <Label>District Address</Label>
                   <textarea
                     name="address"
                     value={form.address}
@@ -186,7 +185,7 @@ export default function CheckoutPage() {
                   <FieldError msg={errors.address} />
                 </div>
                 <div>
-                  <Label>City *</Label>
+                  <Label>City</Label>
                   <input
                     name="city"
                     value={form.city}
@@ -197,7 +196,7 @@ export default function CheckoutPage() {
                   <FieldError msg={errors.city} />
                 </div>
                 <div>
-                  <Label>Pincode *</Label>
+                  <Label>Pincode</Label>
                   <input
                     name="pincode"
                     value={form.pincode}
@@ -209,7 +208,7 @@ export default function CheckoutPage() {
                   <FieldError msg={errors.pincode} />
                 </div>
                 <div className="sm:col-span-2">
-                  <Label>State *</Label>
+                  <Label>State</Label>
                   <select
                     name="state"
                     value={form.state}
@@ -228,38 +227,6 @@ export default function CheckoutPage() {
               </div>
             </FormSection>
 
-            {/* Payment */}
-            <FormSection title="Payment Mode" step="3">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-                {PAYMENT_MODES.map((mode) => (
-                  <label
-                    key={mode}
-                    className={`flex items-center justify-center gap-1.5 sm:gap-2 p-2.5 sm:p-3 rounded-xl border-2 cursor-pointer transition-all font-semibold text-xs sm:text-sm ${
-                      paymentMode === mode
-                        ? "border-navy-500 bg-navy-50 text-navy-700"
-                        : "border-gray-200 hover:border-gray-300 text-gray-600"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="payment"
-                      value={mode}
-                      checked={paymentMode === mode}
-                      onChange={() => setPaymentMode(mode)}
-                      className="sr-only"
-                    />
-                    {mode === "Credit"
-                      ? "💳"
-                      : mode === "Cash"
-                        ? "💵"
-                        : mode === "UPI"
-                          ? "📱"
-                          : "🌐"}{" "}
-                    {mode}
-                  </label>
-                ))}
-              </div>
-            </FormSection>
           </div>
 
           {/* Right: Summary */}

@@ -915,13 +915,18 @@ function ProductsView() {
   const [searchQuery, setSearchQuery] = useState('')
 
   const filteredProducts = products.filter((p) => {
-    const q = searchQuery.toLowerCase()
+    const q = searchQuery.trim()
     if (!q) return true
+    // Escape regex special chars so KBS-100 doesn't treat - as anything special
+    const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    // Item code: query must match the FULL code, or be followed by a non-alphanumeric char
+    // e.g. KBS-100 matches KBS-100 and KBS-100/A but NOT KBS-1001 or KBSH-100
+    const codeMatch = new RegExp(`^${escaped}([^A-Za-z0-9]|$)`, 'i')
+    // Name: match at start of any word only
+    const nameMatch = new RegExp(`(^|\\s|-)${escaped}`, 'i')
     return (
-      p.name?.toLowerCase().includes(q) ||
-      p.itemCode?.toLowerCase().includes(q) ||
-      p.hsnCode?.toLowerCase().includes(q) ||
-      p.place?.toLowerCase().includes(q)
+      codeMatch.test(p.itemCode?.trim()) ||
+      nameMatch.test(p.name)
     )
   })
 

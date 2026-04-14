@@ -324,15 +324,17 @@ export default function HomePage() {
           </div>
 
           {collections.length > 0 && (
-            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-3 mb-6 sm:mb-8">
-              {[{ _id: "all", name: "All Products" }, ...collections].map((col) => (
-                <button key={col._id} onClick={() => handleCollection(col._id)}
-                  className={`flex-shrink-0 px-3 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all duration-300 ${
-                    activeCollection === col._id ? "bg-navy-600 text-white shadow-md" : "bg-gray-100 text-gray-600 hover:bg-navy-50 hover:text-navy-700"
-                  }`}>
-                  {col.name}
-                </button>
-              ))}
+            <div className="relative mb-6 sm:mb-8">
+              <div className="flex gap-2 overflow-x-auto pb-2 collection-scroll">
+                {[{ _id: "all", name: "All Products" }, ...collections].map((col) => (
+                  <button key={col._id} onClick={() => handleCollection(col._id)}
+                    className={`flex-shrink-0 px-3 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all duration-300 ${
+                      activeCollection === col._id ? "bg-navy-600 text-white shadow-md" : "bg-gray-100 text-gray-600 hover:bg-navy-50 hover:text-navy-700"
+                    }`}>
+                    {col.name}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
