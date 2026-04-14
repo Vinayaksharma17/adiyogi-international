@@ -11,8 +11,18 @@ export async function getProducts({ page = 1, limit = 12, search, collection } =
   }
 
   if (search) {
-    const regex = { $regex: search, $options: 'i' };
-    filter.$or = [{ name: regex }, { itemCode: regex }, { description: regex }];
+    const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // Item code: match from start of string OR after a separator (exact prefix match)
+    const itemCodeRegex = { $regex: `(^|[^A-Za-z0-9])${escaped}`, $options: 'i' };
+    // For name and description: match whole word boundary
+    const wordRegex = { $regex: `(^|\\s|-)${escaped}`, $options: 'i' };
+    // Also do an exact item code match (case-insensitive) as the highest priority
+    filter.$or = [
+      { itemCode: { $regex: `^${escaped}$`, $options: 'i' } },
+      { itemCode: { $regex: `^${escaped}[^A-Za-z0-9]`, $options: 'i' } },
+      { name: wordRegex },
+      { description: wordRegex },
+    ];
   }
 
   const [products, total] = await Promise.all([

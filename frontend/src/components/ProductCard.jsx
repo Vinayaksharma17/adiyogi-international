@@ -39,6 +39,32 @@ export default function ProductCard({ product }) {
               </p>
             </div>
           )}
+
+          {/* Logo — top-left corner */}
+          <div className="absolute top-1 left-1 pointer-events-none select-none">
+            <img src="/logo.png" alt="" style={{ height: '100px', width: '100px', objectFit: 'contain', objectPosition: 'left center' }} />
+          </div>
+
+          {/* Diagonal phone watermark */}
+          <div
+            className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden"
+          >
+            <span
+              style={{
+                transform: 'rotate(-35deg)',
+                fontSize: '42px',
+                fontWeight: '700',
+                fontFamily: 'monospace',
+                color: 'rgba(15, 32, 64, 0.18)',
+                letterSpacing: '0.08em',
+                whiteSpace: 'nowrap',
+                userSelect: 'none',
+              }}
+            >
+              7975198804
+            </span>
+          </div>
+
           <div className="absolute inset-0 bg-navy-900/0 group-hover:bg-navy-900/10 transition-all duration-300 flex items-center justify-center">
             <span className="bg-white text-navy-700 text-xs font-bold px-3 py-1.5 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 translate-y-2 group-hover:translate-y-0">
               View Details
@@ -48,6 +74,7 @@ export default function ProductCard({ product }) {
 
         {/* Name + code */}
         <div className="px-3 sm:px-4 pt-3">
+          
           <p className="text-[9px] sm:text-[14px] font-mono font-black text-black-700 mb-1">
             ITEM CODE : {product.itemCode}
           </p>

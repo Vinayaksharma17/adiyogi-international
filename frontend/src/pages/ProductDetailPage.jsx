@@ -174,7 +174,27 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
-              <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+              {/* Logo — top-left corner */}
+              <div className="absolute top-2 left-2 pointer-events-none select-none">
+                <img src="/logo.png" alt="" style={{ height: '100px', width: '102px', objectFit: 'contain', objectPosition: 'left center' }} />
+              </div>
+
+              {/* Diagonal phone watermark */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
+                <span
+                  style={{
+                    transform: 'rotate(-35deg)',
+                    fontSize: '52px',
+                    fontWeight: '700',
+                    fontFamily: 'monospace',
+                    color: 'rgba(15, 32, 64, 0.15)',
+                    letterSpacing: '0.08em',
+                    whiteSpace: 'nowrap',
+                    userSelect: 'none',
+                  }}
+                >
+                  7975198804
+                </span>
               </div>
             </div>
 
@@ -217,12 +237,6 @@ export default function ProductDetailPage() {
             )}
 
             <div className="flex flex-wrap gap-3">
-              <div className="bg-gray-100 rounded-xl px-3 py-2">
-                <p className="text-xs text-gray-400 font-medium">Item Code</p>
-                <p className="font-mono font-bold text-gray-700 text-sm">
-                  {product.itemCode}
-                </p>
-              </div>
               {product.hsnCode && (
                 <div className="bg-gray-100 rounded-xl px-3 py-2">
                   <p className="text-xs text-gray-400 font-medium">HSN Code</p>

@@ -115,3 +115,25 @@ body {
 .delay-300 { animation-delay: 300ms; }
 .delay-400 { animation-delay: 400ms; }
 .delay-500 { animation-delay: 500ms; }
+
+@layer utilities {
+  /* Styled scrollbar for collection filter pills */
+  .collection-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #1B3A6B #eef1f8;
+  }
+  .collection-scroll::-webkit-scrollbar {
+    height: 4px;
+  }
+  .collection-scroll::-webkit-scrollbar-track {
+    background: #eef1f8;
+    border-radius: 4px;
+  }
+  .collection-scroll::-webkit-scrollbar-thumb {
+    background: #1B3A6B;
+    border-radius: 4px;
+  }
+  .collection-scroll::-webkit-scrollbar-thumb:hover {
+    background: #152d54;
+  }
+}

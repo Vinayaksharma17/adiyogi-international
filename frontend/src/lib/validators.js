@@ -11,10 +11,10 @@ export const checkoutSchema = z.object({
   name: z.string().trim().min(1, 'Please enter your full name'),
   whatsapp: indianPhone.describe('WhatsApp number is required for invoice delivery'),
   email: z.union([z.literal(''), z.string().email('Enter a valid email')]),
-  address: z.string().trim().min(1, 'Please enter your delivery address'),
-  city: z.string().trim().min(1, 'Please enter your city'),
-  state: z.string().min(1, 'Please select your state'),
-  pincode,
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  pincode: z.union([z.literal(''), pincode]).optional(),
 })
 
 // ── Admin login ─────────────────────────────────────────────────
