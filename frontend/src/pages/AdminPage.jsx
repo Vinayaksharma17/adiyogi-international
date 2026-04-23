@@ -2044,11 +2044,6 @@ className="input w-auto text-sm"
               <h3 className="font-semibold text-navy-800 mb-2 text-sm">Customer</h3>
               <p className="font-bold text-sm">{selOrder.customer?.name}</p>
               <p className="text-xs text-gray-500">{selOrder.customer?.phone}</p>
-              <p className="text-xs text-gray-500">{selOrder.customer?.address}</p>
-              <p className="text-xs text-gray-500">
-                {selOrder.customer?.city}, {selOrder.customer?.state} -{' '}
-                {selOrder.customer?.pincode}
-              </p>
             </div>
             <div className="bg-gray-50 rounded-xl p-3 sm:p-4">
               <h3 className="font-semibold text-navy-800 mb-2 text-sm">Order Info</h3>

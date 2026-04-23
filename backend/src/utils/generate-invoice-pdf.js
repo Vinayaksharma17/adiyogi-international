@@ -110,10 +110,6 @@ function drawFirstPageHeader(doc, order) {
   doc.rect(285, ADDR_TOP, 270, ADDR_H).fill(LIGHT).stroke();
   doc.fillColor(NAVY).fontSize(9).font('Helvetica-Bold').text('BILL TO:', 297, ADDR_TOP + 10);
   doc.fillColor(DARK).fontSize(10).font('Helvetica-Bold').text(order.customer.name, 297, ADDR_TOP + 24);
-  doc.fontSize(9).font('Helvetica').fillColor(GRAY)
-    .text(`Ph: ${order.customer.phone}`, 297, ADDR_TOP + 38);
-  const addr = `${order.customer.address}, ${order.customer.city}, ${order.customer.state} - ${order.customer.pincode}`;
-  doc.text(addr, 297, ADDR_TOP + 52, { width: 248, lineGap: 2 });
 }
 
 function drawContinuationHeader(doc, order) {

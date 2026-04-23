@@ -167,67 +167,7 @@ export default function CheckoutPage() {
                   <FieldError msg={errors.email} />
                 </div>
               </div>
-            </FormSection>
-
-            {/*      
-            
-            <FormSection title="Delivery Address" step="2">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <div className="sm:col-span-2">
-                  <Label>District Address</Label>
-                  <textarea
-                    name="address"
-                    value={form.address}
-                    onChange={handleChange}
-                    className={`input resize-none ${errors.address ? "border-red-400" : ""}`}
-                    rows={3}
-                    placeholder="House/Flat No., Street, Area..."
-                  />
-                  <FieldError msg={errors.address} />
-                </div>
-                <div>
-                  <Label>City</Label>
-                  <input
-                    name="city"
-                    value={form.city}
-                    onChange={handleChange}
-                    className={`input ${errors.city ? "border-red-400" : ""}`}
-                    placeholder="Mumbai"
-                  />
-                  <FieldError msg={errors.city} />
-                </div>
-                <div>
-                  <Label>Pincode</Label>
-                  <input
-                    name="pincode"
-                    value={form.pincode}
-                    onChange={handleChange}
-                    className={`input ${errors.pincode ? "border-red-400" : ""}`}
-                    placeholder="400001"
-                    maxLength={6}
-                  />
-                  <FieldError msg={errors.pincode} />
-                </div>
-                <div className="sm:col-span-2">
-                  <Label>State</Label>
-                  <select
-                    name="state"
-                    value={form.state}
-                    onChange={handleChange}
-                    className={`input ${errors.state ? "border-red-400" : ""}`}
-                  >
-                    <option value="">Select State</option>
-                    {INDIAN_STATES.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
-                  <FieldError msg={errors.state} />
-                </div>
-              </div>
-            </FormSection>  
-            */}                
+            </FormSection> 
           </div>
            
 

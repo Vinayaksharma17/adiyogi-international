@@ -33,8 +33,7 @@ export function buildAdminMessage(order) {
 Name: ${order.customer.name}
 Phone: ${order.customer.phone}
 WhatsApp: ${order.customer.whatsapp||order.customer.phone}
-Address: ${order.customer.address}
-${order.customer.city}, ${order.customer.state} - ${order.customer.pincode}
+
 
 ━━━━━━━━━━━━━━━━━━━
 🛒 *ITEMS ORDERED*
@@ -72,7 +71,6 @@ _"Come Experience the Quality"_
 ━━━━━━━━━━━━━━━━━━━
 💰 *TOTAL: ₹${order.total.toFixed(2)}*
 
-📍 Delivery to: ${order.customer.city}, ${order.customer.state}
 
 Your invoice PDF has been sent separately. 📄
 We'll process your order shortly! 🙏
