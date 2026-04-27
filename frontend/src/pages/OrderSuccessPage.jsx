@@ -277,13 +277,6 @@ export default function OrderSuccessPage() {
                     ₹{order.total?.toFixed(2)}
                   </p>
                 </div>
-                <div className="col-span-2">
-                  <p className="text-gray-400 text-xs">Delivery</p>
-                  <p className="font-semibold text-gray-700 text-xs">
-                    {order.customer?.address}, {order.customer?.city},{" "}
-                    {order.customer?.state} – {order.customer?.pincode}
-                  </p>
-                </div>
               </div>
             </div>
 
