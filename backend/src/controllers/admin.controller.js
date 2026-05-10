@@ -1,19 +1,7 @@
 import { asyncHandler } from '../utils/async-handler.js';
 import * as adminService from '../services/admin.service.js';
-import { ApiError } from '../utils/api-error.js';
 
 const VALID_ORDER_STATUSES = ['Pending', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled'];
-
-export const login = asyncHandler(async (req, res) => {
-  const { username, password } = req.body;
-  const result = await adminService.login(username, password);
-  res.json(result);
-});
-
-export const setup = asyncHandler(async (req, res) => {
-  const result = await adminService.setup(req.body);
-  res.status(201).json(result);
-});
 
 export const getDashboard = asyncHandler(async (req, res) => {
   const result = await adminService.getDashboard();

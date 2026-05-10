@@ -87,7 +87,6 @@ app.post('/api/whatsapp/test', auth, async (req, res) => {
     `Hey ${admin.name}! This is a test message to confirm WhatsApp notifications are working correctly.\n\n` +
     `Your registered number: *${admin.whatsappNumber}*`;
 
-  console.log(`📤 Sending WhatsApp test message to: ${admin.whatsappNumber}`);
   const sent = await sendWhatsAppMessage(admin.whatsappNumber, message);
   if (sent) {
     res.json({ message: `Test message sent to ${admin.whatsappNumber}` });

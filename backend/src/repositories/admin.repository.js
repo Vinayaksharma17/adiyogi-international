@@ -23,6 +23,14 @@ export function findById(id) {
   return Admin.findById(id);
 }
 
+export function findByClerkId(clerkId) {
+  return Admin.findOne({ clerkId });
+}
+
 export function updateAdmin(id, data) {
   return Admin.findByIdAndUpdate(id, data, { new: true });
+}
+
+export function updateByClerkId(clerkId, data) {
+  return Admin.findOneAndUpdate({ clerkId }, data, { new: true });
 }

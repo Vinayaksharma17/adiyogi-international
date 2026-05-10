@@ -45,7 +45,6 @@ export async function getProducts({ page = 1, limit = 12, search, collection } =
     productRepo.countProducts(filter),
   ]);
 
-  console.log(`[Product Search] Found ${total} products, returning ${products.length}`);
   return { products, total, pages: Math.ceil(total / limit), page: parseInt(page) };
 }
 

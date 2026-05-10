@@ -56,7 +56,7 @@ export async function initWhatsApp() {
   clearInitTimeout();
   initTimeout = setTimeout(() => {
     if (!isReady && isInitializing) {
-      console.warn('⚠️  WhatsApp init timed out after 60s');
+      console.warn('WhatsApp init timed out after 60s');
       isInitializing = false;
       initError = 'Connection timed out — click Retry or Reset Session.';
     }
@@ -72,7 +72,7 @@ export async function initWhatsApp() {
   try { baileys = await import('@whiskeysockets/baileys'); }
   catch (err) {
     initError = 'WhatsApp not set up yet — run: npm install (in backend folder)';
-    console.warn('⚠️  WhatsApp disabled (baileys missing):', err.message);
+    console.warn('WhatsApp disabled (baileys missing):', err.message);
     isInitializing = false;
     clearInitTimeout();
     return;
@@ -125,21 +125,18 @@ export async function initWhatsApp() {
       if (qr && qrcode) {
         try { currentQR = await qrcode.toDataURL(qr); } catch {}
         isReady = false; initError = null;
-        // Reset timeout — QR appeared, user needs time to scan
         clearInitTimeout();
         initTimeout = setTimeout(() => {
           if (!isReady && isInitializing) {
-            console.warn('⚠️  WhatsApp QR scan timed out');
+            console.warn('WhatsApp QR scan timed out');
             isInitializing = false;
             initError = 'QR code expired — click Retry to generate a new one.';
             currentQR = null;
           }
-        }, 120_000); // 2 min to scan QR
-        console.log('📱 WhatsApp QR ready — scan in Admin Panel → WhatsApp Setup');
+        }, 120_000);
       }
 
       if (connection === 'open') {
-        console.log('🟢 WhatsApp connected!');
         isReady = true; currentQR = null; initError = null; retryCount = 0; isInitializing = false;
         clearInitTimeout();
       }
@@ -153,22 +150,19 @@ export async function initWhatsApp() {
           const { Boom } = await import('@hapi/boom');
           reason = new Boom(lastDisconnect?.error)?.output?.statusCode;
         } catch {}
-        console.warn(`⚠️  WhatsApp disconnected (reason: ${reason}, retry: ${retryCount}/${MAX_RETRY})`);
 
         if (reason === DisconnectReason.loggedOut) {
-          console.warn('⚠️  WhatsApp logged out — clearing session for re-scan');
+          console.warn('WhatsApp logged out — clearing session');
           initError = 'Logged out — click Retry to rescan QR code.';
           currentQR = null; retryCount = 0;
           try { rmSync(AUTH_DIR, { recursive: true, force: true }); } catch {}
           setTimeout(() => initWhatsApp(), 2000);
         } else if (retryCount < MAX_RETRY) {
           retryCount++;
-          const delay = 3000 * retryCount;
-          console.log(`🔄 WhatsApp reconnecting in ${delay / 1000}s (attempt ${retryCount}/${MAX_RETRY})...`);
-          setTimeout(() => initWhatsApp(), delay);
+          setTimeout(() => initWhatsApp(), 3000 * retryCount);
         } else {
-          initError = `Disconnected after ${MAX_RETRY} retries — click Retry to try again.`;
-          retryCount = 0; // Reset so manual retry works
+          initError = `Disconnected after ${MAX_RETRY} retries`;
+          retryCount = 0;
         }
       }
     });
@@ -179,7 +173,7 @@ export async function initWhatsApp() {
     initError = err.message;
     isInitializing = false;
     clearInitTimeout();
-    console.error('⚠️  WhatsApp init error (non-fatal):', err.message);
+    console.error('WhatsApp init error:', err.message);
   }
 }
 
@@ -190,17 +184,15 @@ const toJID = (phone) => {
 
 export async function sendWhatsAppMessage(phone, message) {
   if (!isReady || !sock) {
-    console.warn(`⚠️  WA send skipped — isReady:${isReady} sock:${!!sock}`);
+    console.warn(`WA send skipped — isReady:${isReady} sock:${!!sock}`);
     return false;
   }
   const jid = toJID(phone);
-  console.log(`📤 WA sending to JID: ${jid}`);
   try {
     await sock.sendMessage(jid, { text: message });
-    console.log(`✅ WA sent OK to: ${jid}`);
     return true;
   } catch (err) {
-    console.error(`❌ WA send error to ${jid}:`, err.message);
+    console.error('WA send error:', err.message);
     return false;
   }
 }
