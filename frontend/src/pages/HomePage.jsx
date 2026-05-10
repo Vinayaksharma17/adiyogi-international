@@ -252,50 +252,6 @@ export default function HomePage() {
       {/* ── PRODUCT CAROUSEL ── */}
       <ProductCarousel collections={collections} />
 
-      {/* ── COLLECTIONS ── */}
-      <section id="collections" className="py-12 sm:py-16 lg:py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8 sm:mb-12">
-            <span className="section-label">Browse By</span>
-            <h2 className="section-title text-navy-800 mt-2">Our Collections</h2>
-          </div>
-          {collections.length > 0 ? (
-            <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-              <CollectionCard name="All Products" active={activeCollection === "all"} onClick={() => handleCollection("all")} />
-              {collections.map((col) => (
-                <CollectionCard key={col._id} name={col.name} image={col.image} active={activeCollection === col._id} onClick={() => handleCollection(col._id)} />
-              ))}
-            </div>
-          ) : (
-            <p className="text-center text-gray-400 py-8 text-sm">Add collections from the admin panel to display here.</p>
-          )}
-        </div>
-      </section>
-
-      {/* ── HOW TO ORDER ── */}
-      <section id="how-to-order" className="py-12 sm:py-16 lg:py-20 bg-ivory">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8 sm:mb-12">
-            <span className="section-label">Simple & Easy</span>
-            <h2 className="section-title text-navy-800 mt-2">How to Place an Order</h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-8">
-            {[
-              { step: "01", icon: "🔍", title: "Browse & Select", desc: "Explore collections, search for products, and pick what you need." },
-              { step: "02", icon: "🛒", title: "Add to Cart", desc: "Choose your quantities and add products to your cart." },
-              { step: "03", icon: "📱", title: "Order via WhatsApp", desc: "Fill your details and we'll send an invoice straight to WhatsApp." },
-            ].map((s) => (
-              <div key={s.step} className="text-center bg-white rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-lg transition-shadow">
-                <div className="text-4xl sm:text-5xl mb-3 sm:mb-4">{s.icon}</div>
-                <div className="font-mono text-xs sm:text-sm text-champagne-500 font-bold mb-2">STEP {s.step}</div>
-                <h3 className="font-display font-bold text-lg sm:text-xl text-navy-800 mb-2 sm:mb-3">{s.title}</h3>
-                <p className="text-gray-500 text-xs sm:text-sm leading-relaxed">{s.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── PRODUCTS ── */}
       <section id="products" className="py-12 sm:py-16 lg:py-20 bg-white" ref={productsRef}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -398,6 +354,50 @@ export default function HomePage() {
               </button>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* ── COLLECTIONS ── */}
+      <section id="collections" className="py-12 sm:py-16 lg:py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8 sm:mb-12">
+            <span className="section-label">Browse By</span>
+            <h2 className="section-title text-navy-800 mt-2">Our Collections</h2>
+          </div>
+          {collections.length > 0 ? (
+            <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+              <CollectionCard name="All Products" active={activeCollection === "all"} onClick={() => handleCollection("all")} />
+              {collections.map((col) => (
+                <CollectionCard key={col._id} name={col.name} image={col.image} active={activeCollection === col._id} onClick={() => handleCollection(col._id)} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-gray-400 py-8 text-sm">Add collections from the admin panel to display here.</p>
+          )}
+        </div>
+      </section>
+
+      {/* ── HOW TO ORDER ── */}
+      <section id="how-to-order" className="py-12 sm:py-16 lg:py-20 bg-ivory">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8 sm:mb-12">
+            <span className="section-label">Simple & Easy</span>
+            <h2 className="section-title text-navy-800 mt-2">How to Place an Order</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-8">
+            {[
+              { step: "01", icon: "🔍", title: "Browse & Select", desc: "Explore collections, search for products, and pick what you need." },
+              { step: "02", icon: "🛒", title: "Add to Cart", desc: "Choose your quantities and add products to your cart." },
+              { step: "03", icon: "📱", title: "Order via WhatsApp", desc: "Fill your details and we'll send an invoice straight to WhatsApp." },
+            ].map((s) => (
+              <div key={s.step} className="text-center bg-white rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-lg transition-shadow">
+                <div className="text-4xl sm:text-5xl mb-3 sm:mb-4">{s.icon}</div>
+                <div className="font-mono text-xs sm:text-sm text-champagne-500 font-bold mb-2">STEP {s.step}</div>
+                <h3 className="font-display font-bold text-lg sm:text-xl text-navy-800 mb-2 sm:mb-3">{s.title}</h3>
+                <p className="text-gray-500 text-xs sm:text-sm leading-relaxed">{s.desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
     </div>
