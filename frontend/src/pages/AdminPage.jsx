@@ -1,29 +1,45 @@
 import { useState, useEffect, useRef } from 'react'
 import ImageEditor from '@/components/ImageEditor'
 import { useDebounce } from '@/hooks/useDebounce'
-import api from '@/lib/api-client'
+import api, { getClerkToken } from '@/lib/api-client'
 import {
-loginSchema,
-adminSetupSchema,
 productSchema,
 collectionSchema,
 updateProfileSchema,
 changePasswordSchema,
 validateFields,
 } from '@/lib/validators'
-import { STORAGE_KEYS } from '@/constants'
 import toast from 'react-hot-toast'
+import { useAuth, SignIn } from '@clerk/react'
+import { useNavigate } from 'react-router-dom'
 
 export default function AdminPage() {
-const [token, setToken] = useState(() => localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN))
+const { isSignedIn, isLoaded, signOut } = useAuth()
 const [view, setView] = useState('dashboard')
 const [sideOpen, setSideOpen] = useState(false)
+const [tokenReady, setTokenReady] = useState(false)
 
-const logout = () => {
-localStorage.removeItem(STORAGE_KEYS.ADMIN_TOKEN)
-setToken(null)
+useEffect(() => {
+if (!isSignedIn) {
+setTokenReady(false)
+return
 }
-if (!token) return <AdminLogin onLogin={setToken} />
+const check = () => {
+if (getClerkToken()) setTokenReady(true)
+else setTokenReady(false)
+}
+check()
+const interval = setInterval(check, 100)
+return () => clearInterval(interval)
+}, [isSignedIn])
+
+if (!isLoaded) return <LoadingSpinner />
+if (!isSignedIn) return <AdminLogin />
+if (!tokenReady) return <LoadingSpinner />
+
+const logout = async () => {
+await signOut()
+}
 
 const navItems = [
 { id: 'dashboard', label: 'Dashboard', icon: '📊' },
@@ -69,9 +85,9 @@ onClick={() => setSideOpen(false)}
         </button>
       ))}
     </nav>
-    <div className="p-3 sm:p-4 border-t border-navy-700 space-y-1">
+    <div className="p-3 sm:p-4 border-t border-navy-700 space-y-2">
       <button
-        onClick={logout}
+        onClick={() => signOut()}
         className="w-full text-left px-3 sm:px-4 py-2.5 rounded-xl text-sm text-navy-300 hover:bg-navy-700 transition-colors"
       >
         🚪 Logout
@@ -125,43 +141,17 @@ onClick={() => setSideOpen(false)}
 }
 
 /* ─── LOGIN ─── */
-function AdminLogin({ onLogin }) {
-const [showSetup, setShowSetup] = useState(false)
-const [form, setForm] = useState({ username: '', password: '' })
-const [errors, setErrors] = useState({})
-const [setupForm, setSetupForm] = useState({ username: '', password: '', name: 'Admin', whatsappNumber: '' })
-const [setupErrors, setSetupErrors] = useState({})
-const [loading, setLoading] = useState(false)
+function AdminLogin() {
+  const navigate = useNavigate()
+  const { isSignedIn } = useAuth()
 
-const handleLogin = async (e) => {
-e.preventDefault()
-const errs = validateFields(loginSchema, form)
-if (Object.keys(errs).length > 0) { setErrors(errs); toast.error(Object.values(errs)[0]); return }
-setErrors({})
-setLoading(true)
-try {
-const { data } = await api.post('/admin/login', form)
-localStorage.setItem(STORAGE_KEYS.ADMIN_TOKEN, data.token)
-onLogin(data.token)
-} catch (err) {
-toast.error(err.response?.data?.message || 'Invalid credentials')
-} finally { setLoading(false) }
-}
+  useEffect(() => {
+    if (isSignedIn) {
+      navigate('/admin', { replace: true })
+    }
+  }, [isSignedIn, navigate])
 
-const handleSetup = async (e) => {
-e.preventDefault()
-const errs = validateFields(adminSetupSchema, setupForm)
-if (Object.keys(errs).length > 0) { setSetupErrors(errs); toast.error(Object.values(errs)[0]); return }
-setSetupErrors({})
-setLoading(true)
-try {
-await api.post('/admin/setup', setupForm)
-toast.success('Admin created! Please login.')
-setShowSetup(false)
-} catch (err) {
-toast.error(err.response?.data?.message || 'Setup failed')
-} finally { setLoading(false) }
-}
+  if (isSignedIn) return null
 
 return (
 <div className="min-h-screen bg-navy-800 flex items-center justify-center p-4">
@@ -172,68 +162,48 @@ return (
 <p className="text-navy-200 text-xs sm:text-sm">Adiyogi International</p>
 </div>
 <div className="p-5 sm:p-8">
-{!showSetup ? (
-<form onSubmit={handleLogin} className="space-y-4" noValidate>
-<div>
-<Label>Username</Label>
-<input
-value={form.username}
-onChange={(e) => { setForm((p) => ({ ...p, username: e.target.value })); if (errors.username) setErrors((p) => ({ ...p, username: undefined })) }}
-className={`input ${errors.username ? 'border-red-400' : ''}`}
-placeholder="admin"
+<SignIn
+  routing="hash"
+  signUpUrl="/admin/sign-up"
+  appearance={{
+    variables: {
+      colorPrimary: '#1B3A6B',
+      colorTextOnPrimary: '#ffffff',
+      colorBackground: '#ffffff',
+      colorInputBackground: '#ffffff',
+      colorInputText: '#1B3A6B',
+      borderRadius: '0.5rem',
+      fontFamily: 'DM Sans, sans-serif',
+    },
+    elements: {
+      rootBox: "w-full",
+      card: "shadow-none border-0",
+      headerTitle: "font-display font-bold text-navy-800 text-xl hidden",
+      headerSubtitle: "text-gray-500 text-sm hidden",
+      socialButtonsBlockButton: "border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg py-2.5 transition-colors",
+      socialButtonsBlockButtonText: "font-medium text-sm",
+      formFieldLabel: "text-gray-700 font-semibold text-sm",
+      formFieldInput: "border border-gray-300 rounded-lg px-3 py-2.5 text-navy-800 focus:ring-2 focus:ring-navy-700 focus:border-navy-700 transition-all",
+      formButtonPrimary: "bg-navy-700 hover:bg-navy-800 text-white font-semibold rounded-lg py-2.5 px-4 transition-colors",
+      footerActionLink: "text-navy-700 hover:text-navy-800 font-medium text-sm",
+      dividerLine: "bg-gray-200",
+      dividerText: "text-gray-400 text-xs uppercase",
+      identityPreviewText: "text-gray-700 text-sm",
+      identityPreviewEditButton: "text-navy-700 hover:text-navy-800",
+      formFieldInputShowPasswordButton: "text-gray-400 hover:text-navy-700",
+      footer: "hidden",
+      header: "hidden",
+      otpCodeFieldInput: "border border-gray-300 rounded-lg text-navy-700 text-center text-lg",
+      formFieldError: "text-red-500 text-xs",
+    },
+  }}
 />
-<FieldError msg={errors.username} />
-</div>
-<div>
-<Label>Password</Label>
-<input
-type="password"
-value={form.password}
-onChange={(e) => { setForm((p) => ({ ...p, password: e.target.value })); if (errors.password) setErrors((p) => ({ ...p, password: undefined })) }}
-className={`input ${errors.password ? 'border-red-400' : ''}`}
-placeholder="••••••••"
-/>
-<FieldError msg={errors.password} />
-</div>
-<button type="submit" disabled={loading} className="w-full btn-primary">
-{loading ? 'Logging in...' : 'Login'}
-</button>
-<p className="text-center text-xs text-gray-400">
-First time?{' '}
-<button type="button" onClick={() => setShowSetup(true)} className="text-navy-600 font-semibold hover:underline">
-Setup Admin
-</button>
+<p className="text-center text-sm text-gray-500 mt-4">
+  Don't have an account?{" "}
+  <a href="/admin/sign-up" className="text-navy-700 font-semibold hover:underline">
+    Sign up
+  </a>
 </p>
-</form>
-) : (
-<form onSubmit={handleSetup} className="space-y-4" noValidate>
-<h2 className="font-display font-bold text-navy-800 text-lg sm:text-xl">Create Admin Account</h2>
-{[
-{ key: 'name', label: 'Display Name', ph: 'Admin' },
-{ key: 'username', label: 'Username', ph: 'admin' },
-{ key: 'password', label: 'Password', ph: '••••••••', type: 'password' },
-{ key: 'whatsappNumber', label: 'WhatsApp Number', ph: '9876543210' },
-].map((f) => (
-<div key={f.key}>
-<Label>{f.label}</Label>
-<input
-type={f.type || 'text'}
-value={setupForm[f.key]}
-onChange={(e) => { setSetupForm((p) => ({ ...p, [f.key]: e.target.value })); if (setupErrors[f.key]) setSetupErrors((p) => ({ ...p, [f.key]: undefined })) }}
-className={`input ${setupErrors[f.key] ? 'border-red-400' : ''}`}
-placeholder={f.ph}
-/>
-<FieldError msg={setupErrors[f.key]} />
-</div>
-))}
-<button type="submit" disabled={loading} className="w-full btn-primary">
-{loading ? 'Creating...' : 'Create Admin'}
-</button>
-<button type="button" onClick={() => setShowSetup(false)} className="w-full text-center text-sm text-gray-500 hover:text-navy-600">
-Back to Login
-</button>
-</form>
-)}
 </div>
 </div>
 </div>
@@ -243,12 +213,14 @@ Back to Login
 /* ─── DASHBOARD ─── */
 function DashboardView() {
 const [stats, setStats] = useState(null)
+
 useEffect(() => {
 api
 .get('/admin/dashboard')
 .then((r) => setStats(r.data))
 .catch(() => {})
 }, [])
+
 if (!stats) return <LoadingSpinner />
 
 const cards = [

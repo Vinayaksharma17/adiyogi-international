@@ -8,12 +8,14 @@ import CartSidebar from "@/components/CartSidebar";
 import CartBar from "@/components/CartBar";
 import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
+import { TokenSync } from "@/auth";
 
 const HomePage = lazy(() => import("@/pages/HomePage"));
 const ProductDetailPage = lazy(() => import("@/pages/ProductDetailPage"));
 const CheckoutPage = lazy(() => import("@/pages/CheckoutPage"));
 const OrderSuccessPage = lazy(() => import("@/pages/OrderSuccessPage"));
 const AdminPage = lazy(() => import("@/pages/AdminPage"));
+const AdminSignUpPage = lazy(() => import("@/pages/AdminSignUpPage"));
 
 function LoadingSpinner() {
   return (
@@ -39,6 +41,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <CartProvider>
+        <TokenSync />
         <BrowserRouter>
           <ScrollToTop />
           <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
@@ -49,6 +52,7 @@ export default function App() {
               <Route path="/checkout" element={<MainLayout><CheckoutPage /></MainLayout>} />
               <Route path="/order-success" element={<MainLayout><OrderSuccessPage /></MainLayout>} />
               <Route path="/admin" element={<AdminPage />} />
+              <Route path="/admin/sign-up" element={<AdminSignUpPage />} />
               <Route path="*" element={
                 <MainLayout>
                   <div className="min-h-screen flex items-center justify-center pt-20">
