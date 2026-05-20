@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop'
 import 'react-image-crop/dist/ReactCrop.css'
 
@@ -46,6 +46,7 @@ function makeCenteredCrop(aspect, width, height) {
 function rotateSrc(src, degrees) {
   return new Promise((resolve) => {
     const img = new Image()
+    img.crossOrigin = 'anonymous'
     img.onload = () => {
       const rad = (degrees * Math.PI) / 180
       const isPerp = Math.abs(degrees) === 90 || Math.abs(degrees) === 270
@@ -96,6 +97,7 @@ export default function ImageEditor({
   onCancel,
   onRemove,
   onAddNew,
+  lastNewImageIdx = null,
 }) {
   const allImages = [
     ...images.map((img, i) => ({ url: img.url, _index: i, _type: 'existing' })),
@@ -103,6 +105,12 @@ export default function ImageEditor({
   ]
 
   const [selectedIdx, setSelectedIdx] = useState(0)
+
+  useEffect(() => {
+    if (lastNewImageIdx !== null) {
+      setSelectedIdx(images.length + lastNewImageIdx)
+    }
+  }, [lastNewImageIdx, images.length])
   // imgOverride is set when the user rotates; null = use the original allImages[selectedIdx].url
   const [imgOverride, setImgOverride] = useState(null)
   const [crop, setCrop] = useState()
@@ -272,6 +280,7 @@ export default function ImageEditor({
                 src={currentSrc}
                 onLoad={onImageLoad}
                 alt="Crop"
+                crossOrigin="anonymous"
                 style={{
                   display: 'block',
                   width: imgW,
