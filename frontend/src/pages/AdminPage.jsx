@@ -1419,6 +1419,7 @@ onClose={() => setShowUnitModal(false)}
                       onCancel={() => setShowImageEditor(false)}
                       onRemove={handleImageRemove}
                       onAddNew={() => document.getElementById('image-input').click()}
+                      lastNewImageIdx={images.length > 0 ? images.length - 1 : null}
                     />
                   </div>
                 </div>
