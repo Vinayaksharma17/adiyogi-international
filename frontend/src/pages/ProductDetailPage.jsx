@@ -248,7 +248,16 @@ export default function ProductDetailPage() {
               {product.standardPacking && (
                 <div className="bg-champagne-50 border border-champagne-200 rounded-xl px-3 py-2">
                   <p className="text-xs text-champagne-500 font-medium">Standard Packing</p>
-                  <p className="font-bold text-champagne-700 text-sm">
+                  <p
+                    className="font-bold text-sm"
+                    style={{
+                      color: product.standardPackingColor === 'red'
+                        ? '#ef4444'
+                        : product.standardPackingColor === 'green'
+                        ? '#22c55e'
+                        : 'black',
+                    }}
+                  >
                     {product.standardPacking}
                   </p>
                 </div>

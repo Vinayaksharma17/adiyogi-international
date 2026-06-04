@@ -7,7 +7,8 @@ const productSchema = new mongoose.Schema({
   hsnCode:          { type: String, default: '' },
   salesPrice:       { type: Number, required: true },
   purchasePrice:    { type: Number },
-  standardPacking:  { type: String, default: '' },
+  standardPacking:      { type: String, default: '' },
+  standardPackingColor: { type: String, default: '', enum: ['', 'red', 'green'] },
   // Unit configuration
   baseUnit:           { type: String, default: 'PAC', enum: ['PAC', 'NOS'] },
   secondaryUnit:      { type: String, default: 'NOS', enum: ['NOS', 'None'] },

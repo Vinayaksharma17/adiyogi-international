@@ -79,7 +79,16 @@ export default function ProductCard({ product }) {
             ITEM CODE : {product.itemCode}
           </p>
           {product.standardPacking && (
-            <p className="text-[9px] sm:text-[16px] font-mono font-semibold mb-1" style={{ color: "black" }}>
+            <p
+              className="text-[9px] sm:text-[16px] font-mono font-semibold mb-1"
+              style={{
+                color: product.standardPackingColor === 'red'
+                  ? '#ef4444'
+                  : product.standardPackingColor === 'green'
+                  ? '#22c55e'
+                  : 'black',
+              }}
+            >
               Standard Packing: {product.standardPacking}
             </p>
           )}
