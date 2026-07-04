@@ -14,7 +14,6 @@ function AdminSignUp() {
             routing="hash"
             signInUrl="/admin"
             appearance={{
-            appearance={{
               variables: {
                 colorPrimary: '#1B3A6B',
                 colorTextOnPrimary: '#ffffff',
