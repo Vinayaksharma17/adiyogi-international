@@ -75,6 +75,39 @@ export const changePasswordSchema = z
     path: ['confirmPassword'],
   })
 
+// ── Forgot password (step 1: enter username) ─────────────────────
+export const forgotPasswordSchema = z.object({
+  username: z.string().trim().min(1, 'Username is required'),
+})
+
+// ── Verify OTP (step 2: enter OTP) ───────────────────────────────
+export const verifyOtpSchema = z.object({
+  otp: z.string().regex(/^\d{6}$/, 'OTP must be a 6-digit number'),
+})
+
+// ── Reset password (step 3: new password) ─────────────────────────
+export const resetPasswordSchema = z
+  .object({
+    newPassword: z.string().min(6, 'Password must be at least 6 characters'),
+    confirmPassword: z.string().min(1, 'Please confirm your new password'),
+  })
+  .refine((d) => d.newPassword === d.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  })
+
+// ── Reset with recovery code ──────────────────────────────────────
+export const resetWithRecoveryCodeSchema = z
+  .object({
+    recoveryCode: z.string().min(1, 'Recovery code is required'),
+    newPassword: z.string().min(6, 'Password must be at least 6 characters'),
+    confirmPassword: z.string().min(1, 'Please confirm your new password'),
+  })
+  .refine((d) => d.newPassword === d.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  })
+
 // ── Helper: validate and return first error or null ──────────────
 export function validate(schema, data) {
   const result = schema.safeParse(data)

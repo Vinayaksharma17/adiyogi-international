@@ -9,6 +9,10 @@ productSchema,
 collectionSchema,
 updateProfileSchema,
 changePasswordSchema,
+forgotPasswordSchema,
+verifyOtpSchema,
+resetPasswordSchema,
+resetWithRecoveryCodeSchema,
 validateFields,
 } from '@/lib/validators'
 import { STORAGE_KEYS } from '@/constants'
@@ -132,6 +136,90 @@ const [errors, setErrors] = useState({})
 const [setupForm, setSetupForm] = useState({ username: '', password: '', name: 'Admin', whatsappNumber: '' })
 const [setupErrors, setSetupErrors] = useState({})
 const [loading, setLoading] = useState(false)
+const [createdRecoveryCode, setCreatedRecoveryCode] = useState('')
+
+// Forgot password flow: 'idle' | 'username' | 'otp' | 'newPassword' | 'recoveryCode' | 'done'
+const [forgotStep, setForgotStep] = useState('idle')
+const [forgotUsername, setForgotUsername] = useState('')
+const [forgotOtp, setForgotOtp] = useState('')
+const [forgotNewPw, setForgotNewPw] = useState({ newPassword: '', confirmPassword: '' })
+const [forgotRecoveryPw, setForgotRecoveryPw] = useState({ recoveryCode: '', newPassword: '', confirmPassword: '' })
+const [forgotErrors, setForgotErrors] = useState({})
+const [forgotLoading, setForgotLoading] = useState(false)
+
+const resetForgotFlow = () => {
+setForgotStep('idle')
+setForgotUsername('')
+setForgotOtp('')
+setForgotNewPw({ newPassword: '', confirmPassword: '' })
+setForgotRecoveryPw({ recoveryCode: '', newPassword: '', confirmPassword: '' })
+setForgotErrors({})
+}
+
+const handleForgotUsername = async (e) => {
+e.preventDefault()
+const errs = validateFields(forgotPasswordSchema, { username: forgotUsername })
+if (Object.keys(errs).length > 0) { setForgotErrors(errs); toast.error(Object.values(errs)[0]); return }
+setForgotErrors({})
+setForgotLoading(true)
+try {
+const { data } = await api.post('/admin/forgot-password', { username: forgotUsername })
+if (data.whatsappAvailable === false) {
+toast.error(data.message)
+setForgotStep('recoveryCode')
+} else {
+toast.success(data.message)
+setForgotStep('otp')
+}
+} catch (err) {
+toast.error(err.response?.data?.message || 'Failed to send OTP')
+} finally { setForgotLoading(false) }
+}
+
+const handleVerifyOtp = async (e) => {
+e.preventDefault()
+const errs = validateFields(verifyOtpSchema, { otp: forgotOtp })
+if (Object.keys(errs).length > 0) { setForgotErrors(errs); toast.error(Object.values(errs)[0]); return }
+setForgotErrors({})
+setForgotLoading(true)
+try {
+await api.post('/admin/verify-otp', { username: forgotUsername, otp: forgotOtp })
+toast.success('OTP verified! Set your new password.')
+setForgotStep('newPassword')
+} catch (err) {
+toast.error(err.response?.data?.message || 'Invalid OTP')
+} finally { setForgotLoading(false) }
+}
+
+const handleResetPassword = async (e) => {
+e.preventDefault()
+const errs = validateFields(resetPasswordSchema, forgotNewPw)
+if (Object.keys(errs).length > 0) { setForgotErrors(errs); toast.error(Object.values(errs)[0]); return }
+setForgotErrors({})
+setForgotLoading(true)
+try {
+await api.post('/admin/reset-password', { username: forgotUsername, otp: forgotOtp, newPassword: forgotNewPw.newPassword })
+toast.success('Password reset successfully! You can now login.')
+resetForgotFlow()
+} catch (err) {
+toast.error(err.response?.data?.message || 'Failed to reset password')
+} finally { setForgotLoading(false) }
+}
+
+const handleResetWithRecoveryCode = async (e) => {
+e.preventDefault()
+const errs = validateFields(resetWithRecoveryCodeSchema, forgotRecoveryPw)
+if (Object.keys(errs).length > 0) { setForgotErrors(errs); toast.error(Object.values(errs)[0]); return }
+setForgotErrors({})
+setForgotLoading(true)
+try {
+await api.post('/admin/reset-with-recovery-code', { username: forgotUsername, recoveryCode: forgotRecoveryPw.recoveryCode, newPassword: forgotRecoveryPw.newPassword })
+toast.success('Password reset successfully! You can now login.')
+resetForgotFlow()
+} catch (err) {
+toast.error(err.response?.data?.message || 'Failed to reset password')
+} finally { setForgotLoading(false) }
+}
 
 const handleLogin = async (e) => {
 e.preventDefault()
@@ -155,9 +243,9 @@ if (Object.keys(errs).length > 0) { setSetupErrors(errs); toast.error(Object.val
 setSetupErrors({})
 setLoading(true)
 try {
-await api.post('/admin/setup', setupForm)
-toast.success('Admin created! Please login.')
-setShowSetup(false)
+const { data } = await api.post('/admin/setup', setupForm)
+setCreatedRecoveryCode(data.recoveryCode)
+toast.success('Admin created! Please save your recovery code.')
 } catch (err) {
 toast.error(err.response?.data?.message || 'Setup failed')
 } finally { setLoading(false) }
@@ -172,7 +260,134 @@ return (
 <p className="text-navy-200 text-xs sm:text-sm">Adiyogi International</p>
 </div>
 <div className="p-5 sm:p-8">
-{!showSetup ? (
+{forgotStep !== 'idle' ? (
+/* ── Forgot Password Flow ── */
+forgotStep === 'otp' ? (
+<form onSubmit={handleVerifyOtp} className="space-y-4" noValidate>
+<h2 className="font-display font-bold text-navy-800 text-lg sm:text-xl">Enter OTP</h2>
+<p className="text-sm text-gray-500">A 6-digit code has been sent to your WhatsApp number.</p>
+<div>
+<Label>OTP</Label>
+<input
+inputMode="numeric"
+maxLength={6}
+value={forgotOtp}
+onChange={(e) => { setForgotOtp(e.target.value.replace(/\D/g, '')); if (forgotErrors.otp) setForgotErrors((p) => ({ ...p, otp: undefined })) }}
+className={`input text-center text-lg tracking-[0.3em] ${forgotErrors.otp ? 'border-red-400' : ''}`}
+placeholder="000000"
+ autoFocus
+/>
+<FieldError msg={forgotErrors.otp} />
+</div>
+<button type="submit" disabled={forgotLoading} className="w-full btn-primary">
+{forgotLoading ? 'Verifying...' : 'Verify OTP'}
+</button>
+<button type="button" onClick={resetForgotFlow} className="w-full text-center text-sm text-gray-500 hover:text-navy-600">
+Back to Login
+</button>
+</form>
+) : forgotStep === 'newPassword' ? (
+<form onSubmit={handleResetPassword} className="space-y-4" noValidate>
+<h2 className="font-display font-bold text-navy-800 text-lg sm:text-xl">Set New Password</h2>
+<p className="text-sm text-gray-500">Choose a strong password of at least 6 characters.</p>
+<div>
+<Label>New Password</Label>
+<PasswordInput
+value={forgotNewPw.newPassword}
+onChange={(e) => { setForgotNewPw((p) => ({ ...p, newPassword: e.target.value })); if (forgotErrors.newPassword) setForgotErrors((p) => ({ ...p, newPassword: undefined })) }}
+className={forgotErrors.newPassword ? 'border-red-400' : ''}
+placeholder="••••••••"
+autoComplete="new-password"
+/>
+<FieldError msg={forgotErrors.newPassword} />
+</div>
+<div>
+<Label>Confirm Password</Label>
+<PasswordInput
+value={forgotNewPw.confirmPassword}
+onChange={(e) => { setForgotNewPw((p) => ({ ...p, confirmPassword: e.target.value })); if (forgotErrors.confirmPassword) setForgotErrors((p) => ({ ...p, confirmPassword: undefined })) }}
+className={forgotErrors.confirmPassword ? 'border-red-400' : ''}
+placeholder="••••••••"
+autoComplete="new-password"
+/>
+<FieldError msg={forgotErrors.confirmPassword} />
+</div>
+<button type="submit" disabled={forgotLoading} className="w-full btn-primary">
+{forgotLoading ? 'Resetting...' : 'Reset Password'}
+</button>
+<button type="button" onClick={resetForgotFlow} className="w-full text-center text-sm text-gray-500 hover:text-navy-600">
+Back to Login
+</button>
+</form>
+) : forgotStep === 'recoveryCode' ? (
+<form onSubmit={handleResetWithRecoveryCode} className="space-y-4" noValidate>
+<h2 className="font-display font-bold text-navy-800 text-lg sm:text-xl">Reset with Recovery Code</h2>
+<p className="text-sm text-gray-500">Enter your recovery code and set a new password.</p>
+<div>
+<Label>Recovery Code</Label>
+<input
+value={forgotRecoveryPw.recoveryCode}
+onChange={(e) => { setForgotRecoveryPw((p) => ({ ...p, recoveryCode: e.target.value })); if (forgotErrors.recoveryCode) setForgotErrors((p) => ({ ...p, recoveryCode: undefined })) }}
+className={`input font-mono tracking-wider ${forgotErrors.recoveryCode ? 'border-red-400' : ''}`}
+placeholder="A1B2C3D4"
+autoFocus
+/>
+<FieldError msg={forgotErrors.recoveryCode} />
+</div>
+<div>
+<Label>New Password</Label>
+<PasswordInput
+value={forgotRecoveryPw.newPassword}
+onChange={(e) => { setForgotRecoveryPw((p) => ({ ...p, newPassword: e.target.value })); if (forgotErrors.newPassword) setForgotErrors((p) => ({ ...p, newPassword: undefined })) }}
+className={forgotErrors.newPassword ? 'border-red-400' : ''}
+placeholder="••••••••"
+autoComplete="new-password"
+/>
+<FieldError msg={forgotErrors.newPassword} />
+</div>
+<div>
+<Label>Confirm Password</Label>
+<PasswordInput
+value={forgotRecoveryPw.confirmPassword}
+onChange={(e) => { setForgotRecoveryPw((p) => ({ ...p, confirmPassword: e.target.value })); if (forgotErrors.confirmPassword) setForgotErrors((p) => ({ ...p, confirmPassword: undefined })) }}
+className={forgotErrors.confirmPassword ? 'border-red-400' : ''}
+placeholder="••••••••"
+autoComplete="new-password"
+/>
+<FieldError msg={forgotErrors.confirmPassword} />
+</div>
+<button type="submit" disabled={forgotLoading} className="w-full btn-primary">
+{forgotLoading ? 'Resetting...' : 'Reset Password'}
+</button>
+<button type="button" onClick={resetForgotFlow} className="w-full text-center text-sm text-gray-500 hover:text-navy-600">
+Back to Login
+</button>
+</form>
+) : (
+<form onSubmit={handleForgotUsername} className="space-y-4" noValidate>
+<h2 className="font-display font-bold text-navy-800 text-lg sm:text-xl">Forgot Password</h2>
+<p className="text-sm text-gray-500">Enter your username. If WhatsApp is connected, you&apos;ll receive an OTP. Otherwise, you can use your recovery code.</p>
+<div>
+<Label>Username</Label>
+<input
+value={forgotUsername}
+onChange={(e) => { setForgotUsername(e.target.value); if (forgotErrors.username) setForgotErrors((p) => ({ ...p, username: undefined })) }}
+className={`input ${forgotErrors.username ? 'border-red-400' : ''}`}
+placeholder="admin"
+ autoFocus
+/>
+<FieldError msg={forgotErrors.username} />
+</div>
+<button type="submit" disabled={forgotLoading} className="w-full btn-primary">
+{forgotLoading ? 'Checking...' : 'Continue'}
+</button>
+<button type="button" onClick={resetForgotFlow} className="w-full text-center text-sm text-gray-500 hover:text-navy-600">
+Back to Login
+</button>
+</form>
+)
+) : !showSetup ? (
+/* ── Login Form ── */
 <form onSubmit={handleLogin} className="space-y-4" noValidate>
 <div>
 <Label>Username</Label>
@@ -197,14 +412,38 @@ placeholder="••••••••"
 <button type="submit" disabled={loading} className="w-full btn-primary">
 {loading ? 'Logging in...' : 'Login'}
 </button>
-<p className="text-center text-xs text-gray-400">
-First time?{' '}
-<button type="button" onClick={() => setShowSetup(true)} className="text-navy-600 font-semibold hover:underline">
-Setup Admin
+<div className="flex items-center justify-between text-xs text-gray-400">
+<button type="button" onClick={() => setForgotStep('username')} className="text-navy-600 font-semibold hover:underline">
+Forgot Password?
 </button>
-</p>
+<button type="button" onClick={() => setShowSetup(true)} className="text-navy-600 font-semibold hover:underline">
+First time? Setup Admin
+</button>
+</div>
 </form>
+) : createdRecoveryCode ? (
+/* ── Recovery Code Display ── */
+<div className="space-y-4 text-center">
+<h2 className="font-display font-bold text-navy-800 text-lg sm:text-xl">Admin Created!</h2>
+<div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+<p className="text-sm text-amber-800 font-semibold mb-2">Save this Recovery Code</p>
+<p className="text-xs text-amber-700 mb-3">
+This is your backup way to reset your password if WhatsApp is not connected. Write it down and keep it safe.
+</p>
+<div className="bg-white border border-amber-300 rounded-lg px-4 py-3">
+<code className="text-lg font-mono font-bold text-navy-800 tracking-wider">{createdRecoveryCode}</code>
+</div>
+</div>
+<button
+type="button"
+onClick={() => { setCreatedRecoveryCode(''); setShowSetup(false) }}
+className="w-full btn-primary"
+>
+I&apos;ve saved it, go to Login
+</button>
+</div>
 ) : (
+/* ── Setup Form ── */
 <form onSubmit={handleSetup} className="space-y-4" noValidate>
 <h2 className="font-display font-bold text-navy-800 text-lg sm:text-xl">Create Admin Account</h2>
 {[
