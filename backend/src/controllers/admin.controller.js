@@ -52,3 +52,23 @@ export const changePassword = asyncHandler(async (req, res) => {
   res.json({ message: 'Password updated successfully' });
 });
 
+export const forgotPassword = asyncHandler(async (req, res) => {
+  const result = await adminService.forgotPassword(req.body.username);
+  res.json(result);
+});
+
+export const verifyOtp = asyncHandler(async (req, res) => {
+  const result = await adminService.verifyOtp(req.body.username, req.body.otp);
+  res.json(result);
+});
+
+export const resetPassword = asyncHandler(async (req, res) => {
+  const result = await adminService.resetPassword(req.body.username, req.body.otp, req.body.newPassword);
+  res.json(result);
+});
+
+export const resetWithRecoveryCode = asyncHandler(async (req, res) => {
+  const result = await adminService.resetWithRecoveryCode(req.body.username, req.body.recoveryCode, req.body.newPassword);
+  res.json(result);
+});
+

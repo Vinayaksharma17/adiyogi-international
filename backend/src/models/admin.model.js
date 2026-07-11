@@ -6,6 +6,9 @@ const adminSchema = new mongoose.Schema({
   password:       { type: String, required: true },
   whatsappNumber: { type: String, required: true },
   name:           { type: String, default: 'Admin' },
+  resetOtp:       { type: String },
+  resetOtpExpiry: { type: Date },
+  recoveryCode:   { type: String },
 }, { timestamps: true });
 
 adminSchema.pre('save', async function (next) {
