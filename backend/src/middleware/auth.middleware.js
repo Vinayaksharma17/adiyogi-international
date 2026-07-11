@@ -7,10 +7,16 @@ export default function auth(req, res, next) {
 
   verifyToken(token, { secretKey: env.CLERK_SECRET_KEY })
     .then((payload) => {
+      const email = (payload.email || '').toLowerCase();
+
+      if (!env.ADMIN_EMAILS.includes(email)) {
+        return res.status(403).json({ message: 'Access denied — not an authorized admin' });
+      }
+
       req.admin = {
         id: payload.sub,
         clerkId: payload.sub,
-        email: payload.email,
+        email,
         name: payload.name,
       };
       next();

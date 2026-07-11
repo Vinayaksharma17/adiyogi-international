@@ -1,49 +1,54 @@
-import { useState, useEffect, useRef } from 'react';
-import { useAuth } from '@clerk/react';
-import { getClerkToken } from '@/lib/api-client';
+import { useState, useEffect } from "react"
+import { useAuth } from "@clerk/react"
+import { getClerkToken, onTokenChange } from "@/lib/api-client"
 
 export function useAuthenticatedApi() {
-  const { isSignedIn } = useAuth();
-  const [ready, setReady] = useState(false);
-  const [token, setToken] = useState(null);
+  const { isSignedIn } = useAuth()
+  const [ready, setReady] = useState(() => isSignedIn && !!getClerkToken())
+  const [token, setToken] = useState(() => getClerkToken())
 
   useEffect(() => {
-    const checkToken = () => {
-      const currentToken = getClerkToken();
-      if (isSignedIn && currentToken) {
-        setToken(currentToken);
-        setReady(true);
-      } else if (!isSignedIn) {
-        setReady(false);
-        setToken(null);
+    if (!isSignedIn) return
+
+    const check = (currentToken) => {
+      if (currentToken) {
+        setToken(currentToken)
+        setReady(true)
       }
-    };
+    }
 
-    checkToken();
-    const interval = setInterval(checkToken, 200);
-    return () => clearInterval(interval);
-  }, [isSignedIn]);
+    check(getClerkToken())
 
-  return { ready, token };
+    const unsubscribe = onTokenChange(check)
+    return () => {
+      unsubscribe()
+      setReady(false)
+      setToken(null)
+    }
+  }, [isSignedIn])
+
+  return { ready, token }
 }
 
 export function useWaitForToken() {
-  const { isSignedIn } = useAuth();
-  const [ready, setReady] = useState(false);
+  const { isSignedIn } = useAuth()
+  const [ready, setReady] = useState(() => isSignedIn && !!getClerkToken())
 
   useEffect(() => {
-    const check = () => {
-      if (isSignedIn && getClerkToken()) {
-        setReady(true);
-      } else if (!isSignedIn) {
-        setReady(false);
-      }
-    };
+    if (!isSignedIn) return
 
-    check();
-    const interval = setInterval(check, 200);
-    return () => clearInterval(interval);
-  }, [isSignedIn]);
+    const check = (currentToken) => {
+      if (currentToken) setReady(true)
+    }
 
-  return ready;
+    check(getClerkToken())
+
+    const unsubscribe = onTokenChange(check)
+    return () => {
+      unsubscribe()
+      setReady(false)
+    }
+  }, [isSignedIn])
+
+  return ready
 }

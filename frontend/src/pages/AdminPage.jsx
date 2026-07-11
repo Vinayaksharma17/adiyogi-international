@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import ImageEditor from '@/components/ImageEditor'
 import { useDebounce } from '@/hooks/useDebounce'
-import api, { getClerkToken } from '@/lib/api-client'
+import api from '@/lib/api-client'
+import { useAuthenticatedApi } from '@/auth'
 import {
 productSchema,
 collectionSchema,
@@ -15,23 +16,9 @@ import { useNavigate } from 'react-router-dom'
 
 export default function AdminPage() {
 const { isSignedIn, isLoaded, signOut } = useAuth()
+const { ready: tokenReady } = useAuthenticatedApi()
 const [view, setView] = useState('dashboard')
 const [sideOpen, setSideOpen] = useState(false)
-const [tokenReady, setTokenReady] = useState(false)
-
-useEffect(() => {
-if (!isSignedIn) {
-setTokenReady(false)
-return
-}
-const check = () => {
-if (getClerkToken()) setTokenReady(true)
-else setTokenReady(false)
-}
-check()
-const interval = setInterval(check, 100)
-return () => clearInterval(interval)
-}, [isSignedIn])
 
 if (!isLoaded) return <LoadingSpinner />
 if (!isSignedIn) return <AdminLogin />
@@ -164,7 +151,6 @@ return (
 <div className="p-5 sm:p-8">
 <SignIn
   routing="hash"
-  signUpUrl="/admin/sign-up"
   appearance={{
     variables: {
       colorPrimary: '#1B3A6B',
@@ -191,19 +177,12 @@ return (
       identityPreviewText: "text-gray-700 text-sm",
       identityPreviewEditButton: "text-navy-700 hover:text-navy-800",
       formFieldInputShowPasswordButton: "text-gray-400 hover:text-navy-700",
-      footer: "hidden",
       header: "hidden",
       otpCodeFieldInput: "border border-gray-300 rounded-lg text-navy-700 text-center text-lg",
       formFieldError: "text-red-500 text-xs",
     },
   }}
 />
-<p className="text-center text-sm text-gray-500 mt-4">
-  Don't have an account?{" "}
-  <a href="/admin/sign-up" className="text-navy-700 font-semibold hover:underline">
-    Sign up
-  </a>
-</p>
 </div>
 </div>
 </div>

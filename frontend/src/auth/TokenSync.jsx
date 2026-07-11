@@ -1,38 +1,35 @@
-import { useEffect } from "react";
-import { useAuth } from "@clerk/react";
-import { setClerkToken } from "@/lib/api-client";
+import { useEffect } from "react"
+import { useSession, useAuth } from "@clerk/react"
+import { setClerkToken, setClerkGetToken } from "@/lib/api-client"
 
 export default function TokenSync() {
-  const { getToken, isSignedIn } = useAuth();
+  const { isSignedIn } = useAuth()
+  const { session } = useSession()
 
   useEffect(() => {
-    let mounted = true;
+    if (!isSignedIn || !session) {
+      setClerkToken(null)
+      setClerkGetToken(null)
+      return
+    }
 
-    const syncToken = async () => {
-      if (!isSignedIn) {
-        setClerkToken(null);
-        return;
-      }
+    const getToken = session.getToken.bind(session)
+    setClerkGetToken(getToken)
 
-      await new Promise((r) => setTimeout(r, 500));
+    let mounted = true
 
-      if (!mounted) return;
-
-      try {
-        const token = await getToken();
-        setClerkToken(token);
-      } catch (err) {
-        console.error("Failed to get Clerk token:", err);
-        setClerkToken(null);
-      }
-    };
-
-    syncToken();
+    getToken()
+      .then((token) => {
+        if (mounted) setClerkToken(token)
+      })
+      .catch(() => {
+        if (mounted) setClerkToken(null)
+      })
 
     return () => {
-      mounted = false;
-    };
-  }, [getToken, isSignedIn]);
+      mounted = false
+    }
+  }, [isSignedIn, session])
 
-  return null;
+  return null
 }

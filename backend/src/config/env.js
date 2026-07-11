@@ -14,6 +14,11 @@ const envSchema = z.object({
   // Clerk Authentication
   CLERK_SECRET_KEY: z.string().min(1, 'CLERK_SECRET_KEY is required'),
   CLERK_PUBLISHABLE_KEY: z.string().min(1, 'CLERK_PUBLISHABLE_KEY is required'),
+  // Admin access — comma-separated list of emails allowed to access /api/admin/*
+  ADMIN_EMAILS: z
+    .string()
+    .min(1, 'ADMIN_EMAILS is required — comma-separated list of allowed admin emails')
+    .transform((v) => v.split(',').map((e) => e.trim().toLowerCase()).filter(Boolean)),
   // ImageKit CDN
   IMAGEKIT_PUBLIC_KEY: z.string().min(1, 'IMAGEKIT_PUBLIC_KEY is required'),
   IMAGEKIT_PRIVATE_KEY: z.string().min(1, 'IMAGEKIT_PRIVATE_KEY is required'),

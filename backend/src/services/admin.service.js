@@ -49,12 +49,18 @@ export async function updateOrderStatus(id, status) {
 export async function getProfile(adminId) {
   let admin = await adminRepo.findByClerkId(adminId);
   if (!admin) {
-    admin = await adminRepo.createAdmin({
-      clerkId: adminId,
-      name: 'Admin',
-      username: '',
-      whatsappNumber: '',
-    });
+    try {
+      admin = await adminRepo.createAdmin({
+        clerkId: adminId,
+        name: 'Admin',
+        whatsappNumber: '',
+      });
+    } catch (err) {
+      if (err.code === 11000) {
+        admin = await adminRepo.findByClerkId(adminId);
+      }
+      if (!admin) throw err;
+    }
   }
   return { name: admin.name, username: admin.username, whatsappNumber: admin.whatsappNumber };
 }

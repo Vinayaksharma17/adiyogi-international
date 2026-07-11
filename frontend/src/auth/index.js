@@ -1,3 +1,4 @@
-export { default as ProtectedRoute } from "./ProtectedRoute";
-export { default as TokenSync } from "./TokenSync";
-export { useCurrentUser } from "./hooks/useCurrentUser";
+export { default as ProtectedRoute } from "./ProtectedRoute"
+export { default as TokenSync } from "./TokenSync"
+export { useCurrentUser } from "./hooks/useCurrentUser"
+export { useAuthenticatedApi, useWaitForToken } from "./hooks/useAuthenticatedApi"
