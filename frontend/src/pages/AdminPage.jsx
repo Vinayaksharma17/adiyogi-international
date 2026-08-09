@@ -27,6 +27,13 @@ const logout = () => {
 localStorage.removeItem(STORAGE_KEYS.ADMIN_TOKEN)
 setToken(null)
 }
+
+useEffect(() => {
+  const handle = () => setToken(null)
+  window.addEventListener('auth:logout', handle)
+  return () => window.removeEventListener('auth:logout', handle)
+}, [])
+
 if (!token) return <AdminLogin onLogin={setToken} />
 
 const navItems = [
@@ -973,6 +980,7 @@ hsnCode: '',
 salesPrice: '',
 purchasePrice: '',
 standardPacking: '',
+standardPackingColor: '',
 baseUnit: 'PAC',
 secondaryUnit: 'NOS',
 unitConversionRate: 10,
@@ -1096,6 +1104,7 @@ hsnCode: p.hsnCode || '',
 salesPrice: p.salesPrice,
 purchasePrice: p.purchasePrice || '',
 standardPacking: p.standardPacking || '',
+standardPackingColor: p.standardPackingColor ?? '',
 baseUnit: p.baseUnit || 'PAC',
 secondaryUnit: p.secondaryUnit || 'NOS',
 unitConversionRate: p.unitConversionRate || 10,
@@ -1424,16 +1433,63 @@ onClose={() => setShowUnitModal(false)}
           />
 
           {/* Standard Packing */}
-          <FField
-            label="Standard Packing"
-            value={form.standardPacking}
-            onChange={(v) => {
-              setForm((p) => ({ ...p, standardPacking: v }))
-              if (errors.standardPacking) setErrors((p) => ({ ...p, standardPacking: undefined }))
-            }}
-            placeholder="e.g. 10 NOS per PAC"
-            error={errors.standardPacking}
-          />
+          <div>
+            <Label>Standard Packing</Label>
+            <input
+              type="text"
+              value={form.standardPacking}
+              onChange={(e) => {
+                setForm((p) => ({ ...p, standardPacking: e.target.value }))
+                if (errors.standardPacking) setErrors((p) => ({ ...p, standardPacking: undefined }))
+              }}
+              placeholder="e.g. 10 NOS per PAC"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy-400 mb-2"
+            />
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500 font-medium">Color:</span>
+              <button
+                type="button"
+                onClick={() => setForm((p) => ({ ...p, standardPackingColor: form.standardPackingColor === 'red' ? '' : 'red' }))}
+                style={{
+                  backgroundColor: form.standardPackingColor === 'red' ? '#ef4444' : '#fff',
+                  color: form.standardPackingColor === 'red' ? '#fff' : '#ef4444',
+                  border: '2px solid #ef4444',
+                  borderRadius: '9999px',
+                  padding: '2px 12px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                }}
+              >
+                <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: form.standardPackingColor === 'red' ? '#fff' : '#ef4444', display: 'inline-block' }} />
+                Red
+              </button>
+              <button
+                type="button"
+                onClick={() => setForm((p) => ({ ...p, standardPackingColor: form.standardPackingColor === 'green' ? '' : 'green' }))}
+                style={{
+                  backgroundColor: form.standardPackingColor === 'green' ? '#22c55e' : '#fff',
+                  color: form.standardPackingColor === 'green' ? '#fff' : '#16a34a',
+                  border: '2px solid #22c55e',
+                  borderRadius: '9999px',
+                  padding: '2px 12px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                }}
+              >
+                <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: form.standardPackingColor === 'green' ? '#fff' : '#22c55e', display: 'inline-block' }} />
+                Green
+              </button>
+            </div>
+            {errors.standardPacking && <p className="text-red-500 text-xs mt-1">{errors.standardPacking}</p>}
+          </div>
 
           {/* GST Rate */}
           <div>
@@ -1780,7 +1836,13 @@ onClose={() => setShowUnitModal(false)}
               </td>
               <td className="px-3 sm:px-4 py-2.5  text-navy-700">₹{p.salesPrice}</td>
               <td className="px-3 sm:px-4 py-2.5 text-gray-600">
-                {p.standardPacking ? `Standard Packing: ${p.standardPacking}` : '—'}
+                {p.standardPacking ? (
+                  <span className="flex items-center gap-1.5">
+                    {p.standardPackingColor === 'red' && <span className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0 bg-red-500" />}
+                    {p.standardPackingColor === 'green' && <span className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0 bg-green-500" />}
+                    {p.standardPacking}
+                  </span>
+                ) : '—'}
               </td>
               <td className="px-3 sm:px-4 py-2.5 text-gray-500 text-xs">
                 {p.collections?.length

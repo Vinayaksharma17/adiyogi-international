@@ -35,9 +35,11 @@ const errorHandler = (err, _req, res, _next) => {
     err.message.toLowerCase().includes('invalid api key') ||
     (err.response && err.response.status === 401)
   )) {
+    const detail = typeof err === 'object' ? JSON.stringify(err) : String(err);
+    logger.error({ imagekitError: err }, '[imagekit] upload auth failure');
     return res.status(502).json({
       message: 'Image upload failed: CDN credentials are not configured correctly. Please check your IMAGEKIT environment variables.',
-      ...(process.env.NODE_ENV === 'development' && { detail: err.message }),
+      ...(process.env.NODE_ENV === 'development' && { detail }),
     });
   }
 

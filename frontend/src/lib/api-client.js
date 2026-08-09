@@ -17,6 +17,7 @@ api.interceptors.response.use(
   (err) => {
     if (err.response?.status === 401) {
       localStorage.removeItem(STORAGE_KEYS.ADMIN_TOKEN);
+      window.dispatchEvent(new Event('auth:logout'));
     }
     return Promise.reject(err);
   },

@@ -8,6 +8,7 @@ export const createProductSchema = z.object({
   hsnCode: z.string().optional(),
   purchasePrice: z.union([z.literal(''), z.coerce.number()]).optional(),
   standardPacking: z.string().optional(),
+  standardPackingColor: z.enum(['', 'red', 'green']).optional(),
   baseUnit: z.enum(['PAC', 'NOS']).optional(),
   secondaryUnit: z.enum(['NOS', 'None']).optional(),
   unitConversionRate: z.coerce.number().optional(),
